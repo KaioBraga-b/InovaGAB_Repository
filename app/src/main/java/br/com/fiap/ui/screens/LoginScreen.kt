@@ -166,7 +166,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
 
                 Button(
                     onClick = { 
-                        authViewModel.signIn(email, senha) {
+                        authViewModel.signIn(email, senha, perfilSelecionado) {
                             val route = when(perfilSelecionado) {
                                 UserProfile.OPERADOR -> Screens.OperadorHome.route
                                 UserProfile.GESTOR -> Screens.GestorHome.route
@@ -195,6 +195,21 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                         )
                     }
                 }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                TextButton(
+                    onClick = { navController.navigate(Screens.SignUp.route) },
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text(
+                        text = "Não tem uma conta? Cadastre-se",
+                        color = BlueSecondary,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
 

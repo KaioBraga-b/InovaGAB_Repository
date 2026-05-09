@@ -5,6 +5,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.screens.LoginScreen
+import br.com.fiap.ui.screens.SignUpScreen
 import br.com.fiap.ui.screens.operador.OperadorHomeScreen
 import br.com.fiap.ui.screens.gestor.GestorHomeScreen
 import br.com.fiap.ui.screens.lider.LiderHomeScreen
@@ -20,6 +21,9 @@ fun AppNavigation() {
     NavHost(navController = navController, startDestination = Screens.Login.route) {
         composable(Screens.Login.route) {
             LoginScreen(navController)
+        }
+        composable(Screens.SignUp.route) {
+            SignUpScreen(navController)
         }
         composable(Screens.OperadorHome.route) {
             OperadorHomeScreen(navController)
