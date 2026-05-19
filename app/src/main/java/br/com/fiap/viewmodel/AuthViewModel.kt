@@ -17,6 +17,31 @@ class AuthViewModel : ViewModel() {
     var isLoading = mutableStateOf(false)
     var errorMessage = mutableStateOf<String?>(null)
 
+    // Estado do usuário para persistência na UI
+    var userData = mutableStateOf<Map<String, Any>?>(null)
+
+    init {
+        // Verifica se já existe um usuário logado e busca os dados
+        val currentUser = auth.currentUser
+        if (currentUser != null) {
+            fetchUserData(currentUser.uid)
+        }
+    }
+
+    private fun fetchUserData(userId: String) {
+        isLoading.value = true
+        db.collection("usuarios").document(userId).get()
+            .addOnSuccessListener { document ->
+                if (document.exists()) {
+                    userData.value = document.data
+                }
+                isLoading.value = false
+            }
+            .addOnFailureListener {
+                isLoading.value = false
+            }
+    }
+
     fun signIn(email: String, password: String, selectedProfile: UserProfile, onSuccess: () -> Unit) {
         if (email.isBlank() || password.isBlank()) {
             errorMessage.value = "E-mail e senha são obrigatórios"
@@ -43,6 +68,7 @@ class AuthViewModel : ViewModel() {
                                     
                                     if (storedRole == selectedProfile.name) {
                                         Log.d("AuthDebug", "Sucesso! Perfil bate.")
+                                        userData.value = document.data
                                         onSuccess()
                                     } else {
                                         Log.w("AuthDebug", "Bloqueado! Perfil no banco ($storedRole) != Selecionado (${selectedProfile.name})")
@@ -71,9 +97,9 @@ class AuthViewModel : ViewModel() {
             }
     }
 
-    fun signUp(email: String, password: String, onSuccess: () -> Unit) {
-        if (email.isBlank() || password.isBlank()) {
-            errorMessage.value = "E-mail e senha são obrigatórios"
+    fun signUp(email: String, password: String, nome: String, sobrenome: String, unidade: String, onSuccess: () -> Unit) {
+        if (email.isBlank() || password.isBlank() || nome.isBlank() || sobrenome.isBlank() || unidade.isBlank()) {
+            errorMessage.value = "Todos os campos são obrigatórios"
             return
         }
 
@@ -91,11 +117,15 @@ class AuthViewModel : ViewModel() {
                     if (userId != null) {
                         val userMap = hashMapOf(
                             "email" to email,
+                            "nome" to nome,
+                            "sobrenome" to sobrenome,
+                            "unidade" to unidade,
                             "role" to UserProfile.OPERADOR.name
                         )
                         db.collection("usuarios").document(userId).set(userMap)
                             .addOnSuccessListener {
                                 Log.d("AuthDebug", "Perfil de OPERADOR salvo com sucesso no Firestore!")
+                                userData.value = userMap
                                 onSuccess()
                                 isLoading.value = false
                             }
@@ -115,5 +145,6 @@ class AuthViewModel : ViewModel() {
 
     fun signOut() {
         auth.signOut()
+        userData.value = null
     }
 }

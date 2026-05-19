@@ -2,7 +2,9 @@ package br.com.fiap.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
@@ -23,6 +25,9 @@ import br.com.fiap.viewmodel.AuthViewModel
 @Composable
 fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
+    var nome by remember { mutableStateOf("") }
+    var sobrenome by remember { mutableStateOf("") }
+    var unidade by remember { mutableStateOf("") }
     var senha by remember { mutableStateOf("") }
     var confirmarSenha by remember { mutableStateOf("") }
 
@@ -47,7 +52,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp),
+                .padding(24.dp)
+                .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Spacer(modifier = Modifier.height(20.dp))
@@ -76,6 +82,56 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                     )
 
                     Spacer(modifier = Modifier.height(24.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Nome", style = MaterialTheme.typography.labelMedium, color = TextGray)
+                            OutlinedTextField(
+                                value = nome,
+                                onValueChange = { nome = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = BlueSecondary,
+                                    unfocusedBorderColor = BorderGray
+                                )
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(text = "Sobrenome", style = MaterialTheme.typography.labelMedium, color = TextGray)
+                            OutlinedTextField(
+                                value = sobrenome,
+                                onValueChange = { sobrenome = it },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = BlueSecondary,
+                                    unfocusedBorderColor = BorderGray
+                                )
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Text(
+                        text = "Unidade (Cidade/Estado)",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TextGray
+                    )
+                    OutlinedTextField(
+                        value = unidade,
+                        onValueChange = { unidade = it },
+                        placeholder = { Text("Ex: Rio de Janeiro RJ") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BlueSecondary,
+                            unfocusedBorderColor = BorderGray
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
                         text = "E-mail",
@@ -145,7 +201,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                     Button(
                         onClick = {
                             if (senha == confirmarSenha) {
-                                authViewModel.signUp(email, senha) {
+                                authViewModel.signUp(email, senha, nome, sobrenome, unidade) {
                                     navController.popBackStack()
                                 }
                             } else {

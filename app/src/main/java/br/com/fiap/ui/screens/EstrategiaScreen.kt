@@ -28,45 +28,21 @@ import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.GestorBottomBar
 import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.components.OperadorBottomBar
+import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
 
-data class ObjetivoEstrategico(
-    val id: String,
-    val numero: String,
-    val titulo: String,
-    val descricao: String,
-    val tags: List<String>,
-    val cor: Color
-)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
+import br.com.fiap.viewmodel.Estrategia
+import br.com.fiap.ui.screens.lider.EstrategiaCard
 
 @Composable
-fun EstrategiaScreen(navController: NavController, userRole: String = "OPERADOR") {
-    val objetivos = listOf(
-        ObjetivoEstrategico(
-            id = "1",
-            numero = "OBJ 01",
-            titulo = "Digitalização da Operação",
-            descricao = "Reduzir processos manuais em 40% até dezembro de 2025. Foco em checklists digitais, apps de campo e integração de sistemas.",
-            tags = listOf("Logística", "Passageiros"),
-            cor = Color(0xFF2563EB)
-        ),
-        ObjetivoEstrategico(
-            id = "2",
-            numero = "OBJ 02",
-            titulo = "Experiência do Colaborador",
-            descricao = "Aumentar NPS interno de 62 para 80 pontos. Engajamento via plataforma InovaGAB e reconhecimento de talentos.",
-            tags = listOf("RH", "Cultura"),
-            cor = Color(0xFF10B981)
-        ),
-        ObjetivoEstrategico(
-            id = "3",
-            numero = "OBJ 03",
-            titulo = "Eficiência de Custos",
-            descricao = "Reduzir R$ 5M em custos operacionais via iniciativas de inovação com ROI mensurável em até 12 meses.",
-            tags = listOf("Finanças", "Operação"),
-            cor = Color(0xFFF59E0B)
-        )
-    )
+fun EstrategiaScreen(
+    navController: NavController, 
+    userRole: String = "OPERADOR",
+    inovacaoViewModel: InovacaoViewModel = viewModel()
+) {
+    val estrategias = inovacaoViewModel.estrategias
 
     Scaffold(
         bottomBar = {
@@ -80,7 +56,7 @@ fun EstrategiaScreen(navController: NavController, userRole: String = "OPERADOR"
         floatingActionButton = {
             if (userRole == "LIDER") {
                 FloatingActionButton(
-                    onClick = { /* Criar novo objetivo */ },
+                    onClick = { navController.navigate(Screens.CriarEstrategia.route) },
                     containerColor = Color(0xFF2563EB),
                     contentColor = Color.White,
                     shape = CircleShape
@@ -171,91 +147,10 @@ fun EstrategiaScreen(navController: NavController, userRole: String = "OPERADOR"
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 modifier = Modifier.fillMaxSize()
             ) {
-                items(objetivos) { objetivo ->
-                    ObjetivoCard(objetivo, canEdit = userRole == "LIDER")
+                items(estrategias) { estrategia ->
+                    EstrategiaCard(estrategia, navController)
                 }
                 item { Spacer(modifier = Modifier.height(20.dp)) }
-            }
-        }
-    }
-}
-
-@Composable
-fun ObjetivoCard(objetivo: ObjetivoEstrategico, canEdit: Boolean) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-            // Faixa lateral colorida
-            Box(
-                modifier = Modifier
-                    .width(6.dp)
-                    .fillMaxHeight()
-                    .background(objetivo.cor)
-            )
-            
-            Column(modifier = Modifier.padding(16.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = objetivo.numero,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = objetivo.cor
-                    )
-                    
-                    if (canEdit) {
-                        Row {
-                            IconButton(onClick = { /* Editar */ }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Edit, contentDescription = "Editar", tint = Color.Gray, modifier = Modifier.size(16.dp))
-                            }
-                            IconButton(onClick = { /* Deletar */ }, modifier = Modifier.size(24.dp)) {
-                                Icon(Icons.Default.Delete, contentDescription = "Deletar", tint = Color.Red.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
-                            }
-                        }
-                    }
-                }
-
-                Text(
-                    text = objetivo.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black,
-                    modifier = Modifier.padding(top = 4.dp)
-                )
-
-                Text(
-                    text = objetivo.descricao,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.DarkGray,
-                    modifier = Modifier.padding(top = 8.dp),
-                    lineHeight = 18.sp
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    objetivo.tags.forEach { tag ->
-                        Surface(
-                            color = objetivo.cor.copy(alpha = 0.1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text(
-                                text = tag,
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                                color = objetivo.cor,
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 11.sp
-                            )
-                        }
-                    }
-                }
             }
         }
     }
