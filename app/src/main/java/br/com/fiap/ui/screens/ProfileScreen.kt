@@ -2,8 +2,10 @@ package br.com.fiap.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Logout
@@ -26,6 +28,7 @@ import br.com.fiap.ui.navigation.Screens
 
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.ui.theme.BluePrimary
 import br.com.fiap.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -34,22 +37,29 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
     // Observa os dados persistidos no ViewModel
     val userData = authViewModel.userData
     
-    // Extração robusta de dados (checa minúsculo e maiúsculo para evitar erro de digitação no banco)
+    // Extração robusta de dados
     val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: "Usuário"
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
     val userUnidade = (userData?.get("unidade") ?: userData?.get("Unidade") ?: userData?.get("matriz") ?: userData?.get("Matriz"))?.toString() ?: "Matriz - São Paulo"
     val userEmail = (userData?.get("email") ?: userData?.get("Email"))?.toString() ?: "E-mail não cadastrado"
     val userRole = (userData?.get("role") ?: userData?.get("Role"))?.toString() ?: "OPERADOR"
 
-    val fullDisplayName = if (userSobrenome.isNotBlank()) "$userName $userSobrenome" else userName
+    // Lógica para corrigir o nome exibido baseada no cargo, conforme solicitado
+    val displaySobrenome = when (userRole) {
+        "LIDER" -> if (userSobrenome.lowercase() == "operador" || userSobrenome.isBlank()) "Líder" else userSobrenome
+        "GESTOR" -> if (userSobrenome.isBlank()) "Gestor" else userSobrenome
+        else -> if (userSobrenome.isBlank()) "Operador" else userSobrenome
+    }
+
+    val fullDisplayName = "$userName $displaySobrenome"
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Meu Perfil", fontWeight = FontWeight.Bold) },
+                title = { Text("Meu Perfil", fontWeight = FontWeight.Bold, color = BluePrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = BluePrimary)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
@@ -61,6 +71,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -72,7 +83,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = userName.take(1),
+                    text = userName.take(1).uppercase(),
                     fontSize = 40.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -114,7 +125,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
 
             // Informações do Perfil
             ProfileInfoItem(icon = Icons.Default.Person, label = "Nome", value = userName)
-            ProfileInfoItem(icon = Icons.Default.Person, label = "Sobrenome", value = userSobrenome)
+            ProfileInfoItem(icon = Icons.Default.Person, label = "Sobrenome", value = displaySobrenome)
             ProfileInfoItem(icon = Icons.Default.Email, label = "E-mail", value = userEmail)
             ProfileInfoItem(icon = Icons.Default.Badge, label = "Cargo", value = when(userRole) {
                 "GESTOR" -> "Gestor de Inovação"
@@ -123,7 +134,7 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
             })
             ProfileInfoItem(icon = Icons.Default.Person, label = "Unidade", value = userUnidade)
 
-            Spacer(modifier = Modifier.weight(1f))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Botão de Log Out
             Button(

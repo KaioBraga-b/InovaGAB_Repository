@@ -115,14 +115,14 @@ class InovacaoViewModel : ViewModel() {
         }
     }
 
-    // Funções para manipulação
+    // Funções para manipulação de Projetos
     fun adicionarProjeto(projeto: Projeto) {
         db.collection("projetos").add(projeto)
             .addOnSuccessListener { Log.d("Firestore", "Projeto adicionado") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao adicionar projeto", e) }
     }
 
-    fun atualizarProjeto(id: String, novoProgresso: Double, novaEtapa: Int) {
+    fun atualizarProjeto(id: String, titulo: String, area: String, novoProgresso: Double, novaEtapa: Int) {
         if (id.isBlank()) return
         val projeto = projetos.find { it.id == id }
         if (projeto == null) {
@@ -131,38 +131,50 @@ class InovacaoViewModel : ViewModel() {
         }
         val novasEtapas = listOf("Ideação", "Aprovação", "Execução", "Resultado")
         
-        val updates = mapOf(
+        val updates = mutableMapOf<String, Any>(
+            "titulo" to titulo,
+            "area" to area,
             "progresso" to novoProgresso,
             "etapaAtiva" to novaEtapa,
             "status" to novasEtapas[novaEtapa],
-            "progressoTexto" to "${(novoProgresso * 100).toInt()}% concluído",
-            "statusColor" to when(novaEtapa) {
-                0 -> Color(0xFFD97706).toArgb()
-                1 -> Color(0xFF2563EB).toArgb()
-                2 -> Color(0xFF8B5CF6).toArgb()
-                3 -> Color(0xFF16A34A).toArgb()
-                else -> projeto.statusColor
-            },
-            "statusBg" to when(novaEtapa) {
-                0 -> Color(0xFFFEF3C7).toArgb()
-                1 -> Color(0xFFEFF6FF).toArgb()
-                2 -> Color(0xFFF5F3FF).toArgb()
-                3 -> Color(0xFFDCFCE7).toArgb()
-                else -> projeto.statusBg
-            }
+            "progressoTexto" to "${(novoProgresso * 100).toInt()}% concluído"
         )
+        
+        updates["statusColor"] = when(novaEtapa) {
+            0 -> Color(0xFFD97706).toArgb()
+            1 -> Color(0xFF2563EB).toArgb()
+            2 -> Color(0xFF8B5CF6).toArgb()
+            3 -> Color(0xFF16A34A).toArgb()
+            else -> projeto.statusColor
+        }
+        updates["statusBg"] = when(novaEtapa) {
+            0 -> Color(0xFFFEF3C7).toArgb()
+            1 -> Color(0xFFEFF6FF).toArgb()
+            2 -> Color(0xFFF5F3FF).toArgb()
+            3 -> Color(0xFFDCFCE7).toArgb()
+            else -> projeto.statusBg
+        }
+
         db.collection("projetos").document(id).update(updates)
             .addOnSuccessListener { Log.d("Firestore", "Projeto $id atualizado") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao atualizar projeto $id", e) }
     }
 
+    fun excluirProjeto(id: String) {
+        if (id.isBlank()) return
+        db.collection("projetos").document(id).delete()
+            .addOnSuccessListener { Log.d("Firestore", "Projeto $id excluído") }
+            .addOnFailureListener { e -> Log.e("Firestore", "Erro ao excluir projeto $id", e) }
+    }
+
+    // Funções para manipulação de Estrategias
     fun adicionarEstrategia(estrategia: Estrategia) {
         db.collection("estrategias").add(estrategia)
             .addOnSuccessListener { Log.d("Firestore", "Estrategia adicionada") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao adicionar estrategia", e) }
     }
 
-    fun atualizarEstrategia(id: String, novoProgresso: Double, novaEtapa: Int) {
+    fun atualizarEstrategia(id: String, titulo: String, descricao: String, novoProgresso: Double, novaEtapa: Int) {
         if (id.isBlank()) return
         val estrategia = estrategias.find { it.id == id }
         if (estrategia == null) {
@@ -171,31 +183,55 @@ class InovacaoViewModel : ViewModel() {
         }
         val nomesEtapas = listOf("Planejamento", "Em andamento", "Concluído")
         
-        val updates = mapOf(
+        val updates = mutableMapOf<String, Any>(
+            "titulo" to titulo,
+            "descricao" to descricao,
             "progresso" to novoProgresso,
-            "status" to nomesEtapas[novaEtapa],
-            "statusColor" to when(novaEtapa) {
-                0 -> Color(0xFFF3F4F6).toArgb()
-                1 -> Color(0xFFEFF6FF).toArgb()
-                2 -> Color(0xFFDCFCE7).toArgb()
-                else -> estrategia.statusColor
-            },
-            "statusTextColor" to when(novaEtapa) {
-                0 -> Color(0xFF6B7280).toArgb()
-                1 -> Color(0xFF2563EB).toArgb()
-                2 -> Color(0xFF16A34A).toArgb()
-                else -> estrategia.statusTextColor
-            }
+            "status" to nomesEtapas[novaEtapa]
         )
+        
+        updates["statusColor"] = when(novaEtapa) {
+            0 -> Color(0xFFF3F4F6).toArgb()
+            1 -> Color(0xFFEFF6FF).toArgb()
+            2 -> Color(0xFFDCFCE7).toArgb()
+            else -> estrategia.statusColor
+        }
+        updates["statusTextColor"] = when(novaEtapa) {
+            0 -> Color(0xFF6B7280).toArgb()
+            1 -> Color(0xFF2563EB).toArgb()
+            2 -> Color(0xFF16A34A).toArgb()
+            else -> estrategia.statusTextColor
+        }
+
         db.collection("estrategias").document(id).update(updates)
             .addOnSuccessListener { Log.d("Firestore", "Estrategia $id atualizada") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao atualizar estrategia $id", e) }
     }
 
+    fun excluirEstrategia(id: String) {
+        if (id.isBlank()) return
+        db.collection("estrategias").document(id).delete()
+            .addOnSuccessListener { Log.d("Firestore", "Estrategia $id excluída") }
+            .addOnFailureListener { e -> Log.e("Firestore", "Erro ao excluir estrategia $id", e) }
+    }
+
+    // Funções para manipulação de Ideias
     fun adicionarIdeia(ideia: Ideia) {
         db.collection("ideias").add(ideia)
             .addOnSuccessListener { Log.d("Firestore", "Ideia adicionada") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao adicionar ideia", e) }
+    }
+
+    fun atualizarIdeia(id: String, titulo: String, descricao: String, area: String) {
+        if (id.isBlank()) return
+        val updates = mapOf(
+            "titulo" to titulo,
+            "descricao" to descricao,
+            "area" to area
+        )
+        db.collection("ideias").document(id).update(updates)
+            .addOnSuccessListener { Log.d("Firestore", "Ideia $id atualizada") }
+            .addOnFailureListener { e -> Log.e("Firestore", "Erro ao atualizar ideia $id", e) }
     }
 
     fun atualizarStatusIdeia(id: String, novoStatus: String) {
@@ -208,12 +244,12 @@ class InovacaoViewModel : ViewModel() {
             "status" to novoStatus,
             "statusColor" to when(novoStatus) {
                 "Aprovada" -> Color(0xFFDCFCE7).toArgb()
-                "Recusada" -> Color(0xFFFEE2E2).toArgb() // Vermelho claro para recusado
+                "Recusada" -> Color(0xFFFEE2E2).toArgb()
                 else -> Color(0xFFFEF3C7).toArgb()
             },
             "statusTextColor" to when(novoStatus) {
                 "Aprovada" -> Color(0xFF16A34A).toArgb()
-                "Recusada" -> Color(0xFFEF4444).toArgb() // Vermelho para recusado
+                "Recusada" -> Color(0xFFEF4444).toArgb()
                 else -> Color(0xFFD97706).toArgb()
             },
             "etapa" to when(novoStatus) {
@@ -227,5 +263,12 @@ class InovacaoViewModel : ViewModel() {
         db.collection("ideias").document(id).update(updates)
             .addOnSuccessListener { Log.d("Firestore", "Ideia $id atualizada para $novoStatus") }
             .addOnFailureListener { e -> Log.e("Firestore", "Erro ao atualizar ideia $id", e) }
+    }
+
+    fun excluirIdeia(id: String) {
+        if (id.isBlank()) return
+        db.collection("ideias").document(id).delete()
+            .addOnSuccessListener { Log.d("Firestore", "Ideia $id excluída") }
+            .addOnFailureListener { e -> Log.e("Firestore", "Erro ao excluir ideia $id", e) }
     }
 }

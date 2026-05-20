@@ -14,6 +14,7 @@ import br.com.fiap.ui.screens.gestor.GestorHomeScreen
 import br.com.fiap.ui.screens.lider.LiderHomeScreen
 import br.com.fiap.ui.screens.operador.NovaIdeiaScreen
 import br.com.fiap.ui.screens.operador.MinhasIdeiasScreen
+import br.com.fiap.ui.screens.operador.EditarIdeiaScreen
 import br.com.fiap.ui.screens.EstrategiaScreen
 import br.com.fiap.ui.screens.ProjetosScreen
 import br.com.fiap.ui.screens.lider.CriarEstrategiaScreen
@@ -44,6 +45,10 @@ fun AppNavigation() {
         composable(Screens.MinhasIdeias.route) {
             MinhasIdeiasScreen(navController, inovacaoViewModel, authViewModel)
         }
+        composable("${Screens.EditarIdeia.route}/{ideiaId}") { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("ideiaId") ?: ""
+            EditarIdeiaScreen(navController, id, inovacaoViewModel = inovacaoViewModel)
+        }
         composable(Screens.GestorHome.route) {
             GestorHomeScreen(navController, authViewModel, inovacaoViewModel)
         }
@@ -57,24 +62,23 @@ fun AppNavigation() {
             ProjetosScreen(navController, userRole = "LIDER", authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         
-        // Rotas para Estratégia com diferentes permissões
         composable("${Screens.Estrategia.route}/{role}") { backStackEntry ->
             val role = backStackEntry.arguments?.getString("role") ?: "OPERADOR"
             EstrategiaScreen(navController, userRole = role, authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable(Screens.CriarEstrategia.route) {
-            CriarEstrategiaScreen(navController, inovacaoViewModel = inovacaoViewModel)
+            CriarEstrategiaScreen(navController, authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable(Screens.CriarProjeto.route) {
-            CriarProjetoScreen(navController, inovacaoViewModel = inovacaoViewModel)
+            CriarProjetoScreen(navController, authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable("${Screens.EditarProjeto.route}/{projetoId}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("projetoId") ?: ""
-            EditarProjetoScreen(navController, id, inovacaoViewModel = inovacaoViewModel)
+            EditarProjetoScreen(navController, id, authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable("${Screens.EditarEstrategia.route}/{estrategiaId}") { backStackEntry ->
             val id = backStackEntry.arguments?.getString("estrategiaId") ?: ""
-            EditarEstrategiaScreen(navController, id, inovacaoViewModel = inovacaoViewModel)
+            EditarEstrategiaScreen(navController, id, authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable(Screens.Profile.route) {
             ProfileScreen(navController, authViewModel)

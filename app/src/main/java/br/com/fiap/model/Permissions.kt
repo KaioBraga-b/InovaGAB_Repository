@@ -3,17 +3,24 @@ package br.com.fiap.model
 object Permissions {
     /**
      * Define as permissões de forma escalável.
-     * GESTOR: Admin total.
-     * LIDER: Pode gerenciar estratégias e ver projetos.
-     * OPERADOR: Pode enviar ideias e ver estratégias/projetos (sem editar).
+     * GESTOR: Visualiza tudo, mas não gerencia estratégias.
+     * LIDER: Responsável por gerenciar estratégias.
+     * OPERADOR: Envia ideias e visualiza progresso.
      */
 
     fun canManageStrategies(role: String): Boolean {
-        return role == UserProfile.GESTOR.name || role == UserProfile.LIDER.name
+        // Apenas Líder cria estratégias
+        return role == UserProfile.LIDER.name
     }
 
     fun canEditStrategy(role: String): Boolean {
-        return role == UserProfile.GESTOR.name || role == UserProfile.LIDER.name
+        // Apenas Líder edita estratégias
+        return role == UserProfile.LIDER.name
+    }
+
+    fun canDeleteStrategy(role: String): Boolean {
+        // Apenas Líder exclui estratégias
+        return role == UserProfile.LIDER.name
     }
 
     fun canManageProjects(role: String): Boolean {
@@ -21,11 +28,10 @@ object Permissions {
     }
 
     fun canSubmitIdea(role: String): Boolean {
-        return true // Todos podem enviar ideias
+        return true
     }
     
     fun canEditIdea(role: String): Boolean {
-        // Regra solicitada: Operador não pode alterar ideias (apenas enviar)
         return role == UserProfile.GESTOR.name
     }
 }

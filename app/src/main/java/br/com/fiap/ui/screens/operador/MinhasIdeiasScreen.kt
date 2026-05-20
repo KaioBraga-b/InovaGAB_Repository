@@ -1,10 +1,13 @@
 package br.com.fiap.ui.screens.operador
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.AuthViewModel
 import br.com.fiap.viewmodel.Ideia
+import br.com.fiap.ui.navigation.Screens
 
 @Composable
 fun MinhasIdeiasScreen(
@@ -99,7 +103,9 @@ fun MinhasIdeiasScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(ideias) { ideia ->
-                        IdeiaCard(ideia)
+                        IdeiaCard(ideia, onEditClick = {
+                            navController.navigate("${Screens.EditarIdeia.route}/${ideia.id}")
+                        })
                     }
                     item { Spacer(modifier = Modifier.height(20.dp)) }
                 }
@@ -109,9 +115,11 @@ fun MinhasIdeiasScreen(
 }
 
 @Composable
-fun IdeiaCard(ideia: Ideia) {
+fun IdeiaCard(ideia: Ideia, onEditClick: () -> Unit) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onEditClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -122,24 +130,34 @@ fun IdeiaCard(ideia: Ideia) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                Text(
-                    text = ideia.titulo,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f),
-                    color = Color(0xFF1E3A8A)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    color = Color(ideia.statusColor),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = ideia.status,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color(ideia.statusTextColor),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
+                        text = ideia.titulo,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E3A8A)
+                    )
+                }
+                
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color(ideia.statusColor),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = ideia.status,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = Color(ideia.statusTextColor),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -168,18 +186,6 @@ fun IdeiaCard(ideia: Ideia) {
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)
-                )
-            }
-
-            ideia.destaque?.let {
-                Spacer(modifier = Modifier.height(12.dp))
-                HorizontalDivider(color = Color(0xFFF3F4F6))
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = it,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color(0xFF059669),
-                    fontWeight = FontWeight.Bold
                 )
             }
         }

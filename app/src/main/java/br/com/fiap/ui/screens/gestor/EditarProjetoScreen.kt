@@ -7,7 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,29 +20,37 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.GestorBottomBar
+import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.theme.*
-
 import br.com.fiap.viewmodel.InovacaoViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarProjetoScreen(
     navController: NavController, 
     projetoId: String,
+    authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
+    val userData = authViewModel.userData
+    val userRole = (userData?.get("role") ?: userData?.get("Role"))?.toString() ?: "GESTOR"
+    
     val projeto = inovacaoViewModel.projetos.find { it.id == projetoId }
     
+    var titulo by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
     var progresso by remember { mutableDoubleStateOf(0.0) }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
     var initialized by remember { mutableStateOf(false) }
 
     val etapas = listOf("Ideação", "Aprovação", "Execução", "Resultado")
 
-    // Inicializa apenas uma vez quando o projeto é carregado
     LaunchedEffect(projeto) {
         if (!initialized && projeto != null) {
+            titulo = projeto.titulo
+            area = projeto.area
             progresso = projeto.progresso
             etapaSelecionada = projeto.etapaAtiva
             initialized = true
@@ -52,161 +60,160 @@ fun EditarProjetoScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Editar Projeto", fontWeight = FontWeight.Bold) },
+                title = { Text("Editar Projeto", fontWeight = FontWeight.Bold, color = BluePrimary) },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = BluePrimary)
+                    }
+                },
+                actions = {
+                    IconButton(onClick = {
+                        inovacaoViewModel.excluirProjeto(projetoId)
+                        navController.popBackStack()
+                    }) {
+                        Icon(Icons.Default.Delete, contentDescription = "Excluir", tint = Color.Red)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
-        bottomBar = { GestorBottomBar(navController) }
+        bottomBar = { 
+            if (userRole == "GESTOR") GestorBottomBar(navController)
+            else LiderBottomBar(navController)
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp)
+                .imePadding()
         ) {
-            // Header do Projeto
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White)
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(24.dp)
             ) {
-                Row(
-                    modifier = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .background(Color(0xFFEFF6FF), RoundedCornerShape(12.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.Edit, contentDescription = null, tint = Color(0xFF2563EB))
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Column {
-                        Text(
-                            text = projeto?.titulo ?: "Carregando...",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1E3A8A)
-                        )
-                        Text(
-                            text = "Ajuste o status e progresso atual",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.Gray
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-            // Seção de Progresso
-            Text(
-                text = "Progresso Atual",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A)
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
                 Text(
-                    text = "${(progresso * 100).toInt()}%",
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Black,
-                    color = Color(0xFF2563EB)
+                    text = "Informações Básicas",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
                 )
-            }
+                
+                Spacer(modifier = Modifier.height(12.dp))
 
-            Slider(
-                value = progresso.toFloat(),
-                onValueChange = { progresso = it.toDouble() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = SliderDefaults.colors(
-                    thumbColor = Color(0xFF2563EB),
-                    activeTrackColor = Color(0xFF2563EB),
-                    inactiveTrackColor = Color(0xFFE5E7EB)
+                OutlinedTextField(
+                    value = titulo,
+                    onValueChange = { titulo = it },
+                    label = { Text("Nome do Projeto") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = BlueSecondary,
+                        unfocusedBorderColor = BorderGray
+                    )
                 )
-            )
 
-            Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
-            // Seção de Etapas
-            Text(
-                text = "Mudar Etapa do Processo",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A)
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
+                OutlinedTextField(
+                    value = area,
+                    onValueChange = { area = it },
+                    label = { Text("Área Responsável") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = BlueSecondary,
+                        unfocusedBorderColor = BorderGray
+                    )
+                )
 
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                etapas.forEachIndexed { index, etapa ->
-                    val isSelected = etapaSelecionada == index
-                    Surface(
-                        onClick = { 
-                            etapaSelecionada = index 
-                            // Auto-progresso ao clicar na etapa
-                            progresso = when(index) {
-                                0 -> 0.1
-                                1 -> 0.3
-                                2 -> 0.6
-                                3 -> 1.0
-                                else -> progresso
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        color = if (isSelected) Color(0xFFEFF6FF) else Color.White,
-                        border = if (isSelected) androidx.compose.foundation.BorderStroke(2.dp, Color(0xFF2563EB)) else null
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(16.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Progresso Atual",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxWidth()) {
+                    Text(
+                        text = "${(progresso * 100).toInt()}%",
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Black,
+                        color = Color(0xFF2563EB)
+                    )
+                }
+
+                Slider(
+                    value = progresso.toFloat(),
+                    onValueChange = { progresso = it.toDouble() },
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color(0xFF2563EB),
+                        activeTrackColor = Color(0xFF2563EB),
+                        inactiveTrackColor = Color(0xFFE5E7EB)
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Mudar Etapa",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    etapas.forEachIndexed { index, etapa ->
+                        val isSelected = etapaSelecionada == index
+                        Button(
+                            onClick = { 
+                                etapaSelecionada = index 
+                                if (progresso < (index + 1) * 0.25) {
+                                    progresso = (index + 1) * 0.25
+                                }
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (isSelected) Color(0xFF2563EB) else Color(0xFFF3F4F6),
+                                contentColor = if (isSelected) Color.White else Color.Gray
+                            ),
+                            contentPadding = PaddingValues(horizontal = 2.dp)
                         ) {
-                            Text(
-                                text = etapa,
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                                color = if (isSelected) Color(0xFF2563EB) else Color.Black
-                            )
-                            if (isSelected) {
-                                Icon(
-                                    imageVector = Icons.Default.Edit,
-                                    contentDescription = null,
-                                    tint = Color(0xFF2563EB),
-                                    modifier = Modifier.size(16.dp)
-                                )
-                            }
+                            Text(text = etapa, fontSize = 9.sp)
                         }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(40.dp))
 
-            Button(
-                onClick = { 
-                    inovacaoViewModel.atualizarProjeto(projetoId, progresso, etapaSelecionada)
-                    navController.popBackStack() 
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
-            ) {
-                Text("Salvar Alterações", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                Button(
+                    onClick = { 
+                        if (titulo.isNotBlank()) {
+                            inovacaoViewModel.atualizarProjeto(projetoId, titulo, area, progresso, etapaSelecionada)
+                            navController.popBackStack() 
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                ) {
+                    Text("Salvar Alterações", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                }
             }
         }
     }

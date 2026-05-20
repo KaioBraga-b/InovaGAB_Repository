@@ -2,12 +2,13 @@ package br.com.fiap.ui.screens.lider
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,226 +24,238 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import br.com.fiap.ui.components.GestorBottomBar
 import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.navigation.Screens
-import androidx.compose.material.icons.filled.Edit
-
 import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.Estrategia
 import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CriarEstrategiaScreen(
     navController: NavController,
+    authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
+    val userData = authViewModel.userData
+    // Padrão GESTOR para evitar pular para fluxo de líder indevidamente
+    val userRole = (userData?.get("role") ?: userData?.get("Role"))?.toString() ?: "GESTOR"
+
     var novaEstrategiaTitulo by remember { mutableStateOf("") }
     var novaEstrategiaDescricao by remember { mutableStateOf("") }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
     val etapas = listOf("Planejamento", "Em andamento", "Concluído")
 
-    val estrategias = inovacaoViewModel.estrategias
-
     Scaffold(
-        bottomBar = { LiderBottomBar(navController) }
+        bottomBar = { 
+            if (userRole == "GESTOR") GestorBottomBar(navController)
+            else LiderBottomBar(navController)
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
-                .padding(horizontal = 20.dp)
+                .imePadding()
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
-            
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp)
             ) {
-                Text(
-                    text = buildAnnotatedString {
-                        append("Inova")
-                        withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
-                            append("GAB")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
+                Spacer(modifier = Modifier.height(24.dp))
                 
-                Surface(
-                    color = Color(0xFFEFF6FF),
-                    shape = RoundedCornerShape(12.dp)
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
-                        text = "Liderança",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = Color(0xFF2563EB),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            Text(
-                text = "Gestão de Estratégias",
-                style = MaterialTheme.typography.bodyMedium,
-                color = Color.Gray,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Formulário de Criação Rápida
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Cadastrar Nova Estratégia",
-                        style = MaterialTheme.typography.titleSmall,
+                        text = buildAnnotatedString {
+                            append("Inova")
+                            withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
+                                append("GAB")
+                            }
+                        },
+                        style = MaterialTheme.typography.headlineMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E3A8A)
                     )
-                    Spacer(modifier = Modifier.height(12.dp))
                     
-                    OutlinedTextField(
-                        value = novaEstrategiaTitulo,
-                        onValueChange = { novaEstrategiaTitulo = it },
-                        placeholder = { Text("Título da estratégia") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFFE5E7EB)
-                        ),
-                        singleLine = true
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    OutlinedTextField(
-                        value = novaEstrategiaDescricao,
-                        onValueChange = { novaEstrategiaDescricao = it },
-                        placeholder = { Text("Breve descrição do objetivo...") },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color(0xFF2563EB),
-                            unfocusedBorderColor = Color(0xFFE5E7EB)
-                        )
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    Text(
-                        text = "Fase Estratégica",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    Surface(
+                        color = if (userRole == "GESTOR") Color(0xFFECFDF5) else Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(12.dp)
                     ) {
-                        etapas.forEachIndexed { index, etapa ->
-                            val isSelected = etapaSelecionada == index
-                            Button(
-                                onClick = { etapaSelecionada = index },
-                                modifier = Modifier.weight(1f),
-                                contentPadding = PaddingValues(horizontal = 4.dp),
-                                shape = RoundedCornerShape(8.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = if (isSelected) Color(0xFF2563EB) else Color(0xFFF3F4F6),
-                                    contentColor = if (isSelected) Color.White else Color.Gray
-                                )
-                            ) {
-                                Text(
-                                    text = etapa,
-                                    fontSize = 10.sp,
-                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                )
+                        Text(
+                            text = if (userRole == "GESTOR") "Gestor" else "Líder",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = if (userRole == "GESTOR") Color(0xFF10B981) else Color(0xFF2563EB),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Gestão de Estratégias",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.Gray,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // Formulário de Criação
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Cadastrar Nova Estratégia",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E3A8A)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        
+                        OutlinedTextField(
+                            value = novaEstrategiaTitulo,
+                            onValueChange = { novaEstrategiaTitulo = it },
+                            placeholder = { Text("Título da estratégia") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFFE5E7EB)
+                            ),
+                            singleLine = true
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedTextField(
+                            value = novaEstrategiaDescricao,
+                            onValueChange = { novaEstrategiaDescricao = it },
+                            placeholder = { Text("Breve descrição do objetivo...") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFFE5E7EB)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        Text(
+                            text = "Fase Estratégica",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray,
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            etapas.forEachIndexed { index, etapa ->
+                                val isSelected = etapaSelecionada == index
+                                Button(
+                                    onClick = { etapaSelecionada = index },
+                                    modifier = Modifier.weight(1f),
+                                    contentPadding = PaddingValues(horizontal = 4.dp),
+                                    shape = RoundedCornerShape(8.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = if (isSelected) Color(0xFF2563EB) else Color(0xFFF3F4F6),
+                                        contentColor = if (isSelected) Color.White else Color.Gray
+                                    )
+                                ) {
+                                    Text(
+                                        text = etapa,
+                                        fontSize = 10.sp,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
+                                    )
+                                }
                             }
                         }
-                    }
 
-                    Spacer(modifier = Modifier.height(20.dp))
-                    
-                    Button(
-                        onClick = {
-                            if (novaEstrategiaTitulo.isNotBlank()) {
-                                inovacaoViewModel.adicionarEstrategia(Estrategia(
-                                    titulo = novaEstrategiaTitulo,
-                                    descricao = novaEstrategiaDescricao,
-                                    status = etapas[etapaSelecionada],
-                                    statusColor = when(etapaSelecionada) {
-                                        0 -> Color(0xFFF3F4F6).toArgb()
-                                        1 -> Color(0xFFEFF6FF).toArgb()
-                                        2 -> Color(0xFFDCFCE7).toArgb()
-                                        else -> Color.Gray.toArgb()
-                                    },
-                                    statusTextColor = when(etapaSelecionada) {
-                                        0 -> Color(0xFF6B7280).toArgb()
-                                        1 -> Color(0xFF2563EB).toArgb()
-                                        2 -> Color(0xFF16A34A).toArgb()
-                                        else -> Color.Black.toArgb()
-                                    },
-                                    progresso = when(etapaSelecionada) {
-                                        0 -> 0.1
-                                        1 -> 0.5
-                                        2 -> 1.0
-                                        else -> 0.0
-                                    },
-                                    dataCriacao = "Criada agora"
-                                ))
-                                novaEstrategiaTitulo = ""
-                                novaEstrategiaDescricao = ""
-                                etapaSelecionada = 0
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
-                    ) {
-                        Icon(Icons.Default.Add, contentDescription = null)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cadastrar Estratégia")
+                        Spacer(modifier = Modifier.height(20.dp))
+                        
+                        Button(
+                            onClick = {
+                                if (novaEstrategiaTitulo.isNotBlank()) {
+                                    inovacaoViewModel.adicionarEstrategia(Estrategia(
+                                        titulo = novaEstrategiaTitulo,
+                                        descricao = novaEstrategiaDescricao,
+                                        status = etapas[etapaSelecionada],
+                                        statusColor = when(etapaSelecionada) {
+                                            0 -> Color(0xFFF3F4F6).toArgb()
+                                            1 -> Color(0xFFEFF6FF).toArgb()
+                                            2 -> Color(0xFFDCFCE7).toArgb()
+                                            else -> Color.Gray.toArgb()
+                                        },
+                                        statusTextColor = when(etapaSelecionada) {
+                                            0 -> Color(0xFF6B7280).toArgb()
+                                            1 -> Color(0xFF2563EB).toArgb()
+                                            2 -> Color(0xFF16A34A).toArgb()
+                                            else -> Color.Black.toArgb()
+                                        },
+                                        progresso = when(etapaSelecionada) {
+                                            0 -> 0.1
+                                            1 -> 0.5
+                                            2 -> 1.0
+                                            else -> 0.0
+                                        },
+                                        dataCriacao = "Criada agora"
+                                    ))
+                                    navController.popBackStack()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Cadastrar Estratégia")
+                        }
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                text = "Estratégias Ativas",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A)
-            )
+                Text(
+                    text = "Estratégias Recentes",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(estrategias) { estrategia ->
-                    EstrategiaCard(estrategia, navController)
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                // Exibe as estratégias usando Column normal (sem item {})
+                inovacaoViewModel.estrategias.take(3).forEach { estrategia ->
+                    EstrategiaCard(estrategia, navController, userRole = userRole)
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
+
+                Spacer(modifier = Modifier.height(40.dp))
             }
         }
     }
 }
-
 
 @Composable
 fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null, userRole: String = "OPERADOR") {

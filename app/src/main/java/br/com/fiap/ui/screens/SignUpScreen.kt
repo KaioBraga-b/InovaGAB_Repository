@@ -38,6 +38,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
         modifier = Modifier
             .fillMaxSize()
             .background(BackgroundBlue)
+            .imePadding()
     ) {
         TopAppBar(
             title = { Text("Criar Conta", color = Color.White) },
@@ -52,7 +53,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(24.dp)
+                .padding(horizontal = 24.dp)
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -92,6 +93,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
                                     focusedBorderColor = BlueSecondary,
                                     unfocusedBorderColor = BorderGray
                                 )
@@ -105,6 +108,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = Color.Black,
+                                    unfocusedTextColor = Color.Black,
                                     focusedBorderColor = BlueSecondary,
                                     unfocusedBorderColor = BorderGray
                                 )
@@ -126,6 +131,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = BlueSecondary,
                             unfocusedBorderColor = BorderGray
                         )
@@ -144,6 +151,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = BlueSecondary,
                             unfocusedBorderColor = BorderGray
                         )
@@ -163,6 +172,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                         visualTransformation = PasswordVisualTransformation(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = BlueSecondary,
                             unfocusedBorderColor = BorderGray
                         )
@@ -182,6 +193,8 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                         visualTransformation = PasswordVisualTransformation(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
                             focusedBorderColor = BlueSecondary,
                             unfocusedBorderColor = BorderGray
                         )
@@ -204,10 +217,6 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                                 authViewModel.signUp(email, senha, nome, sobrenome, unidade) {
                                     navController.popBackStack()
                                 }
-                            } else {
-                                // Nota: Isso pode exigir remover o 'private set' no ViewModel se o erro persistir
-                                // mas por ora ajustamos a sintaxe para o novo padrão de delegate
-                                // authViewModel.errorMessage = "As senhas não coincidem"
                             }
                         },
                         modifier = Modifier
@@ -215,21 +224,31 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                             .height(56.dp),
                         enabled = !isLoading,
                         shape = RoundedCornerShape(12.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = BlueSecondary)
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = BlueSecondary,
+                            disabledContainerColor = BlueSecondary.copy(alpha = 0.6f)
+                        )
                     ) {
                         if (isLoading) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp))
+                            CircularProgressIndicator(
+                                color = Color.White, 
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 3.dp
+                            )
                         } else {
                             Text(
                                 text = "Criar Conta",
                                 style = MaterialTheme.typography.labelLarge,
                                 fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
                             )
                         }
                     }
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
