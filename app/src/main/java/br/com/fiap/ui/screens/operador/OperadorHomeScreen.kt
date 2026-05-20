@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,8 +31,24 @@ import br.com.fiap.ui.components.OperadorBottomBar
 import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
 
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
+
 @Composable
-fun OperadorHomeScreen(navController: NavController) {
+fun OperadorHomeScreen(
+    navController: NavController, 
+    authViewModel: AuthViewModel = viewModel(),
+    inovacaoViewModel: InovacaoViewModel = viewModel()
+) {
+    val userData = authViewModel.userData
+    val userName = userData?.get("nome")?.toString() ?: "Operador"
+    val initials = userName.take(1) + (userData?.get("sobrenome")?.toString()?.take(1) ?: "O")
+    
+    val userId = authViewModel.currentUserId ?: ""
+    val minhasIdeias = inovacaoViewModel.ideias.filter { it.userId == userId }
+    val aprovadasCount = minhasIdeias.count { it.status.contains("Aprovada") }
+
     Scaffold(
         bottomBar = { OperadorBottomBar(navController) }
     ) { innerPadding ->
@@ -76,20 +93,25 @@ fun OperadorHomeScreen(navController: NavController) {
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFF2563EB), CircleShape),
-                        contentAlignment = Alignment.Center
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Profile.route) },
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Text("JM", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF2563EB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
                     }
                 }
             }
 
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Bom dia, João Motorista 👋 • Operacional",
+                text = "Bom dia, $userName 👋 • Operacional",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
@@ -114,8 +136,8 @@ fun OperadorHomeScreen(navController: NavController) {
                 ) {
                     Column {
                         Text("MEU IMPACTO", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Text("3 ideias", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                        Text("registradas · 1 aprovada ✨", color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
+                        Text("${minhasIdeias.size} ideias", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Text("registradas · $aprovadasCount aprovada(s) ✨", color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
                     }
                 }
             }
@@ -146,7 +168,7 @@ fun OperadorHomeScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("ESTRATÉGIA DO GRUPO")
-            StrategyCard()
+            StrategyCard(navController)
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("DESTAQUE DA SEMANA")
@@ -194,9 +216,9 @@ fun QuickActionCard(
 }
 
 @Composable
-fun StrategyCard() {
+fun StrategyCard(navController: NavController) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { navController.navigate("${Screens.Estrategia.route}/OPERADOR") },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)

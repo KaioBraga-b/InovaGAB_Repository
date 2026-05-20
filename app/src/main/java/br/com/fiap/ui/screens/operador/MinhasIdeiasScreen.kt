@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -21,54 +22,19 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.OperadorBottomBar
 import br.com.fiap.ui.theme.*
-
-data class Ideia(
-    val titulo: String,
-    val status: String,
-    val statusColor: Color,
-    val statusTextColor: Color,
-    val area: String,
-    val tempo: String,
-    val progresso: Float,
-    val etapa: String,
-    val destaque: String? = null
-)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
+import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.viewmodel.Ideia
 
 @Composable
-fun MinhasIdeiasScreen(navController: NavController) {
-    val ideias = listOf(
-        Ideia(
-            titulo = "Rastreamento em tempo real das entregas",
-            status = "Em análise",
-            statusColor = Color(0xFFFEF3C7),
-            statusTextColor = Color(0xFFD97706),
-            area = "Logística",
-            tempo = "Enviada há 2 dias",
-            progresso = 0.4f,
-            etapa = "Etapa: Curadoria do gestor"
-        ),
-        Ideia(
-            titulo = "Rota inteligente via app do motorista",
-            status = "Aprovada ✓",
-            statusColor = Color(0xFFDCFCE7),
-            statusTextColor = Color(0xFF16A34A),
-            area = "Operação",
-            tempo = "Aprovada há 15 dias",
-            progresso = 1.0f,
-            etapa = "",
-            destaque = "🏆 Virou projeto! Economizou R$ 12k/mês"
-        ),
-        Ideia(
-            titulo = "Digitalizar checklist de vistoria do ônibus",
-            status = "Enviada",
-            statusColor = Color(0xFFF3F4F6),
-            statusTextColor = Color(0xFF6B7280),
-            area = "Passageiros",
-            tempo = "Enviada ontem",
-            progresso = 0.1f,
-            etapa = "Aguardando triagem inicial"
-        )
-    )
+fun MinhasIdeiasScreen(
+    navController: NavController,
+    inovacaoViewModel: InovacaoViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
+) {
+    val userId = authViewModel.currentUserId ?: ""
+    val ideias = inovacaoViewModel.ideias.filter { it.userId == userId }
 
     Scaffold(
         bottomBar = { OperadorBottomBar(navController) }
@@ -105,7 +71,7 @@ fun MinhasIdeiasScreen(navController: NavController) {
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = "3 ideias",
+                        text = "${ideias.size} ideias",
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                         color = Color(0xFF2563EB),
                         fontWeight = FontWeight.Bold,
@@ -123,14 +89,20 @@ fun MinhasIdeiasScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(ideias) { ideia ->
-                    IdeiaCard(ideia)
+            if (ideias.isEmpty()) {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    Text("Nenhuma ideia enviada ainda.", color = Color.Gray)
                 }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(ideias) { ideia ->
+                        IdeiaCard(ideia)
+                    }
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                }
             }
         }
     }
@@ -159,13 +131,13 @@ fun IdeiaCard(ideia: Ideia) {
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Surface(
-                    color = ideia.statusColor,
+                    color = Color(ideia.statusColor),
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
                         text = ideia.status,
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = ideia.statusTextColor,
+                        color = Color(ideia.statusTextColor),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -180,7 +152,7 @@ fun IdeiaCard(ideia: Ideia) {
             )
 
             LinearProgressIndicator(
-                progress = { ideia.progresso },
+                progress = { ideia.progresso.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
@@ -219,4 +191,3 @@ fun IdeiaCard(ideia: Ideia) {
 fun MinhasIdeiasPreview() {
     MinhasIdeiasScreen(rememberNavController())
 }
-

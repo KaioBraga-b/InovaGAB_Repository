@@ -21,13 +21,26 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.OperadorBottomBar
 import br.com.fiap.ui.theme.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
+import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.viewmodel.Ideia
+import br.com.fiap.ui.navigation.Screens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NovaIdeiaScreen(navController: NavController) {
+fun NovaIdeiaScreen(
+    navController: NavController,
+    inovacaoViewModel: InovacaoViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
+) {
     var titulo by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
     var categoria by remember { mutableStateOf("Operacional") }
+
+    val userData = authViewModel.userData
+    val userId = authViewModel.currentUserId ?: ""
+    val userName = "${userData?.get("nome") ?: ""} ${userData?.get("sobrenome") ?: ""}"
 
     Scaffold(
         topBar = {
@@ -171,7 +184,22 @@ fun NovaIdeiaScreen(navController: NavController) {
             Spacer(modifier = Modifier.height(40.dp))
 
             Button(
-                onClick = { /* Lógica de envio */ },
+                onClick = { 
+                    if (titulo.isNotBlank() && descricao.isNotBlank()) {
+                        inovacaoViewModel.adicionarIdeia(
+                            Ideia(
+                                titulo = titulo,
+                                descricao = descricao,
+                                area = categoria,
+                                autor = userName,
+                                userId = userId
+                            )
+                        )
+                        navController.navigate(Screens.MinhasIdeias.route) {
+                            popUpTo(Screens.NovaIdeia.route) { inclusive = true }
+                        }
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

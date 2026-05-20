@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,9 +26,16 @@ import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.AuthViewModel
 
 @Composable
-fun LiderHomeScreen(navController: NavController) {
+fun LiderHomeScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
+    val userData = authViewModel.userData
+    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: "Líder"
+    val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "R")
+
     Scaffold(
         bottomBar = { LiderBottomBar(navController) }
     ) { innerPadding ->
@@ -71,19 +79,24 @@ fun LiderHomeScreen(navController: NavController) {
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(Color(0xFF8B5CF6), CircleShape),
-                        contentAlignment = Alignment.Center
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Profile.route) },
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Text("RC", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF8B5CF6), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
                     }
                 }
             }
 
             Text(
-                text = "Dashboard executivo · Atualizado hoje às 9:30",
+                text = "Olá, $userName 👋 • Liderança",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 8.dp)
@@ -279,4 +292,3 @@ fun ProjectResultItem(
 fun LiderHomePreview() {
     LiderHomeScreen(rememberNavController())
 }
-
