@@ -31,7 +31,7 @@ import br.com.fiap.viewmodel.AuthViewModel
 
 @Composable
 fun LiderHomeScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
-    val userData by authViewModel.userData
+    val userData = authViewModel.userData
     val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: "Líder"
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
     val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "R")

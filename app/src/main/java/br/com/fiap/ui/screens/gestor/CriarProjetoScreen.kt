@@ -12,6 +12,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -187,27 +188,27 @@ fun CriarProjetoScreen(
                                     titulo = titulo,
                                     status = etapaNome,
                                     statusColor = when(etapaSelecionada) {
-                                        0 -> Color(0xFFD97706) // Ideação (Amarelo)
-                                        1 -> Color(0xFF2563EB) // Aprovação (Azul)
-                                        2 -> Color(0xFF8B5CF6) // Execução (Roxo)
-                                        3 -> Color(0xFF16A34A) // Resultado (Verde)
-                                        else -> Color.Gray
+                                        0 -> Color(0xFFD97706).toArgb()
+                                        1 -> Color(0xFF2563EB).toArgb()
+                                        2 -> Color(0xFF8B5CF6).toArgb()
+                                        3 -> Color(0xFF16A34A).toArgb()
+                                        else -> Color.Gray.toArgb()
                                     },
                                     statusBg = when(etapaSelecionada) {
-                                        0 -> Color(0xFFFEF3C7)
-                                        1 -> Color(0xFFEFF6FF)
-                                        2 -> Color(0xFFF5F3FF)
-                                        3 -> Color(0xFFDCFCE7)
-                                        else -> Color(0xFFF3F4F6)
+                                        0 -> Color(0xFFFEF3C7).toArgb()
+                                        1 -> Color(0xFFEFF6FF).toArgb()
+                                        2 -> Color(0xFFF5F3FF).toArgb()
+                                        3 -> Color(0xFFDCFCE7).toArgb()
+                                        else -> Color(0xFFF3F4F6).toArgb()
                                     },
                                     area = area.ifBlank { "Geral" },
                                     periodo = "Iniciado agora",
                                     progresso = when(etapaSelecionada) {
-                                        0 -> 0.1f
-                                        1 -> 0.3f
-                                        2 -> 0.6f
-                                        3 -> 1.0f
-                                        else -> 0f
+                                        0 -> 0.1
+                                        1 -> 0.3
+                                        2 -> 0.6
+                                        3 -> 1.0
+                                        else -> 0.0
                                     },
                                     progressoTexto = when(etapaSelecionada) {
                                         0 -> "10% concluído"

@@ -32,7 +32,7 @@ import br.com.fiap.viewmodel.AuthViewModel
 @Composable
 fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
     // Observa os dados persistidos no ViewModel
-    val userData by authViewModel.userData
+    val userData = authViewModel.userData
     
     // Extração robusta de dados (checa minúsculo e maiúsculo para evitar erro de digitação no banco)
     val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: "Usuário"

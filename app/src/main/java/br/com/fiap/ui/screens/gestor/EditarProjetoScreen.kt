@@ -29,14 +29,25 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun EditarProjetoScreen(
     navController: NavController, 
-    projetoNome: String,
+    projetoId: String,
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
-    val projeto = inovacaoViewModel.projetos.find { it.titulo == projetoNome }
+    val projeto = inovacaoViewModel.projetos.find { it.id == projetoId }
     
-    var progresso by remember { mutableFloatStateOf(projeto?.progresso ?: 0f) }
-    var etapaSelecionada by remember { mutableIntStateOf(projeto?.etapaAtiva ?: 0) }
+    var progresso by remember { mutableDoubleStateOf(0.0) }
+    var etapaSelecionada by remember { mutableIntStateOf(0) }
+    var initialized by remember { mutableStateOf(false) }
+
     val etapas = listOf("Ideação", "Aprovação", "Execução", "Resultado")
+
+    // Inicializa apenas uma vez quando o projeto é carregado
+    LaunchedEffect(projeto) {
+        if (!initialized && projeto != null) {
+            progresso = projeto.progresso
+            etapaSelecionada = projeto.etapaAtiva
+            initialized = true
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -81,7 +92,7 @@ fun EditarProjetoScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = projetoNome.ifBlank { "Nome do Projeto" },
+                            text = projeto?.titulo ?: "Carregando...",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E3A8A)
@@ -117,8 +128,8 @@ fun EditarProjetoScreen(
             }
 
             Slider(
-                value = progresso,
-                onValueChange = { progresso = it },
+                value = progresso.toFloat(),
+                onValueChange = { progresso = it.toDouble() },
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF2563EB),
@@ -147,10 +158,10 @@ fun EditarProjetoScreen(
                             etapaSelecionada = index 
                             // Auto-progresso ao clicar na etapa
                             progresso = when(index) {
-                                0 -> 0.1f
-                                1 -> 0.3f
-                                2 -> 0.6f
-                                3 -> 1.0f
+                                0 -> 0.1
+                                1 -> 0.3
+                                2 -> 0.6
+                                3 -> 1.0
                                 else -> progresso
                             }
                         },
@@ -186,7 +197,7 @@ fun EditarProjetoScreen(
 
             Button(
                 onClick = { 
-                    inovacaoViewModel.atualizarProjeto(projetoNome, progresso, etapaSelecionada)
+                    inovacaoViewModel.atualizarProjeto(projetoId, progresso, etapaSelecionada)
                     navController.popBackStack() 
                 },
                 modifier = Modifier
@@ -204,5 +215,5 @@ fun EditarProjetoScreen(
 @Preview(showBackground = true)
 @Composable
 fun EditarProjetoPreview() {
-    EditarProjetoScreen(rememberNavController(), "Rota Inteligente GAB")
+    EditarProjetoScreen(rememberNavController(), "ID_TESTE")
 }

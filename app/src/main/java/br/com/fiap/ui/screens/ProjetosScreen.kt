@@ -30,14 +30,28 @@ import br.com.fiap.ui.theme.*
 import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.Projeto
 import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.model.Permissions
+
+import br.com.fiap.viewmodel.AuthViewModel
 
 @Composable
 fun ProjetosScreen(
     navController: NavController, 
     userRole: String = "GESTOR",
+    authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
     val projetos = inovacaoViewModel.projetos
+    val canManage = Permissions.canManageProjects(userRole)
+    
+    val userData = authViewModel.userData
+    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
+    val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val initials = if (userName.isNotEmpty()) {
+        userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
+    } else {
+        if (userRole == "GESTOR") "G" else "L"
+    }
 
     Scaffold(
         bottomBar = {
@@ -45,7 +59,7 @@ fun ProjetosScreen(
             else LiderBottomBar(navController)
         },
         floatingActionButton = {
-            if (userRole == "GESTOR") {
+            if (canManage) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screens.CriarProjeto.route) },
                     containerColor = Color(0xFF2563EB),
@@ -98,13 +112,18 @@ fun ProjetosScreen(
                         )
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .background(if (userRole == "GESTOR") Color(0xFFEF4444) else Color(0xFF8B5CF6), CircleShape),
-                        contentAlignment = Alignment.Center
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Profile.route) },
+                        modifier = Modifier.size(36.dp)
                     ) {
-                        Text(if (userRole == "GESTOR") "AP" else "DR", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(if (userRole == "GESTOR") Color(0xFFEF4444) else Color(0xFF8B5CF6), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
                     }
                 }
             }
@@ -123,7 +142,7 @@ fun ProjetosScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(projetos) { projeto ->
-                    ProjetoCard(projeto, navController, canEdit = userRole == "GESTOR")
+                    ProjetoCard(projeto, navController, canEdit = canManage)
                 }
                 item { Spacer(modifier = Modifier.height(80.dp)) }
             }
@@ -162,13 +181,13 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = projeto.statusBg,
+                        color = Color(projeto.statusBg),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
                             text = projeto.status,
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                            color = projeto.statusColor,
+                            color = Color(projeto.statusColor),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -178,7 +197,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                         Spacer(modifier = Modifier.width(8.dp))
                         IconButton(
                             onClick = { 
-                                navController?.navigate("${Screens.EditarProjeto.route}/${projeto.titulo}") 
+                                navController?.navigate("${Screens.EditarProjeto.route}/${projeto.id}") 
                             },
                             modifier = Modifier.size(32.dp)
                         ) {
@@ -225,7 +244,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
 
             // Barra de Progresso
             LinearProgressIndicator(
-                progress = { projeto.progresso },
+                progress = { projeto.progresso.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),

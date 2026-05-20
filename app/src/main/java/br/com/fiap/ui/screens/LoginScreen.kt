@@ -32,8 +32,8 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
     var senha by remember { mutableStateOf("") }
     var perfilSelecionado by remember { mutableStateOf(UserProfile.OPERADOR) }
 
-    val isLoading by authViewModel.isLoading
-    val errorMessage by authViewModel.errorMessage
+    val isLoading = authViewModel.isLoading
+    val errorMessage = authViewModel.errorMessage
 
     Column(
         modifier = Modifier

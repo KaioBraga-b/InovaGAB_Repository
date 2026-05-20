@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -179,27 +180,26 @@ fun CriarEstrategiaScreen(
                         onClick = {
                             if (novaEstrategiaTitulo.isNotBlank()) {
                                 inovacaoViewModel.adicionarEstrategia(Estrategia(
-                                    id = (estrategias.size + 1).toString(),
                                     titulo = novaEstrategiaTitulo,
                                     descricao = novaEstrategiaDescricao,
                                     status = etapas[etapaSelecionada],
                                     statusColor = when(etapaSelecionada) {
-                                        0 -> Color(0xFFF3F4F6)
-                                        1 -> Color(0xFFEFF6FF)
-                                        2 -> Color(0xFFDCFCE7)
-                                        else -> Color.Gray
+                                        0 -> Color(0xFFF3F4F6).toArgb()
+                                        1 -> Color(0xFFEFF6FF).toArgb()
+                                        2 -> Color(0xFFDCFCE7).toArgb()
+                                        else -> Color.Gray.toArgb()
                                     },
                                     statusTextColor = when(etapaSelecionada) {
-                                        0 -> Color(0xFF6B7280)
-                                        1 -> Color(0xFF2563EB)
-                                        2 -> Color(0xFF16A34A)
-                                        else -> Color.Black
+                                        0 -> Color(0xFF6B7280).toArgb()
+                                        1 -> Color(0xFF2563EB).toArgb()
+                                        2 -> Color(0xFF16A34A).toArgb()
+                                        else -> Color.Black.toArgb()
                                     },
                                     progresso = when(etapaSelecionada) {
-                                        0 -> 0.1f
-                                        1 -> 0.5f
-                                        2 -> 1.0f
-                                        else -> 0f
+                                        0 -> 0.1
+                                        1 -> 0.5
+                                        2 -> 1.0
+                                        else -> 0.0
                                     },
                                     dataCriacao = "Criada agora"
                                 ))
@@ -245,7 +245,9 @@ fun CriarEstrategiaScreen(
 
 
 @Composable
-fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null) {
+fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null, userRole: String = "OPERADOR") {
+    val canEdit = br.com.fiap.model.Permissions.canEditStrategy(userRole)
+    
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -283,31 +285,33 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null)
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Surface(
-                        color = estrategia.statusColor,
+                        color = Color(estrategia.statusColor),
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
                             text = estrategia.status,
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                            color = estrategia.statusTextColor,
+                            color = Color(estrategia.statusTextColor),
                             fontSize = 11.sp,
                             fontWeight = FontWeight.Bold
                         )
                     }
                     
-                    Spacer(modifier = Modifier.width(8.dp))
-                    IconButton(
-                        onClick = { 
-                            navController?.navigate("${Screens.EditarEstrategia.route}/${estrategia.titulo}") 
-                        },
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Editar",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(18.dp)
-                        )
+                    if (canEdit) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                        IconButton(
+                            onClick = { 
+                                navController?.navigate("${Screens.EditarEstrategia.route}/${estrategia.id}") 
+                            },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Editar",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -321,7 +325,7 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null)
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LinearProgressIndicator(
-                    progress = { estrategia.progresso },
+                    progress = { estrategia.progresso.toFloat() },
                     modifier = Modifier
                         .weight(1f)
                         .height(6.dp),

@@ -36,13 +36,25 @@ import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.Estrategia
 import br.com.fiap.ui.screens.lider.EstrategiaCard
 
+import br.com.fiap.viewmodel.AuthViewModel
+
 @Composable
 fun EstrategiaScreen(
     navController: NavController, 
     userRole: String = "OPERADOR",
+    authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
     val estrategias = inovacaoViewModel.estrategias
+    
+    val userData = authViewModel.userData
+    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
+    val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val initials = if (userName.isNotEmpty()) {
+        userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
+    } else {
+        userRole.take(1)
+    }
 
     Scaffold(
         bottomBar = {
@@ -93,17 +105,44 @@ fun EstrategiaScreen(
                     color = Color(0xFF1E3A8A)
                 )
 
-                Surface(
-                    color = Color(0xFFEFF6FF),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "2025",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        color = Color(0xFF2563EB),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = when(userRole) {
+                                "GESTOR" -> "Gestor"
+                                "LIDER" -> "Líder"
+                                else -> "Operador"
+                            },
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                            color = Color(0xFF2563EB),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(12.dp))
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Profile.route) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(
+                                    when(userRole) {
+                                        "GESTOR" -> Color(0xFFEF4444)
+                                        "LIDER" -> Color(0xFF8B5CF6)
+                                        else -> Color(0xFF3B82F6)
+                                    }, 
+                                    CircleShape
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
                 }
             }
 
@@ -148,7 +187,7 @@ fun EstrategiaScreen(
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(estrategias) { estrategia ->
-                    EstrategiaCard(estrategia, navController)
+                    EstrategiaCard(estrategia, navController, userRole = userRole)
                 }
                 item { Spacer(modifier = Modifier.height(20.dp)) }
             }

@@ -28,21 +28,30 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 @Composable
 fun EditarEstrategiaScreen(
     navController: NavController, 
-    estrategiaTitulo: String,
+    estrategiaId: String,
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
-    val estrategia = inovacaoViewModel.estrategias.find { it.titulo == estrategiaTitulo }
+    val estrategia = inovacaoViewModel.estrategias.find { it.id == estrategiaId }
     
-    var progresso by remember { mutableFloatStateOf(estrategia?.progresso ?: 0f) }
-    var etapaSelecionada by remember { mutableIntStateOf(
-        when(estrategia?.status) {
-            "Planejamento" -> 0
-            "Em andamento" -> 1
-            "Concluído" -> 2
-            else -> 0
-        }
-    ) }
+    var progresso by remember { mutableDoubleStateOf(0.0) }
+    var etapaSelecionada by remember { mutableIntStateOf(0) }
+    var initialized by remember { mutableStateOf(false) }
+
     val etapas = listOf("Planejamento", "Em andamento", "Concluído")
+
+    // Inicializa apenas uma vez quando a estratégia é carregada
+    LaunchedEffect(estrategia) {
+        if (!initialized && estrategia != null) {
+            progresso = estrategia.progresso
+            etapaSelecionada = when(estrategia.status) {
+                "Planejamento" -> 0
+                "Em andamento" -> 1
+                "Concluído" -> 2
+                else -> 0
+            }
+            initialized = true
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -86,7 +95,7 @@ fun EditarEstrategiaScreen(
                     Spacer(modifier = Modifier.width(16.dp))
                     Column {
                         Text(
-                            text = estrategiaTitulo.ifBlank { "Título da Estratégia" },
+                            text = estrategia?.titulo ?: "Carregando...",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E3A8A)
@@ -121,8 +130,8 @@ fun EditarEstrategiaScreen(
             }
 
             Slider(
-                value = progresso,
-                onValueChange = { progresso = it },
+                value = progresso.toFloat(),
+                onValueChange = { progresso = it.toDouble() },
                 modifier = Modifier.fillMaxWidth(),
                 colors = SliderDefaults.colors(
                     thumbColor = Color(0xFF2563EB),
@@ -149,9 +158,9 @@ fun EditarEstrategiaScreen(
                         onClick = { 
                             etapaSelecionada = index 
                             progresso = when(index) {
-                                0 -> 0.1f
-                                1 -> 0.5f
-                                2 -> 1.0f
+                                0 -> 0.1
+                                1 -> 0.5
+                                2 -> 1.0
                                 else -> progresso
                             }
                         },
@@ -179,7 +188,7 @@ fun EditarEstrategiaScreen(
 
             Button(
                 onClick = { 
-                    inovacaoViewModel.atualizarEstrategia(estrategiaTitulo, progresso, etapaSelecionada)
+                    inovacaoViewModel.atualizarEstrategia(estrategiaId, progresso, etapaSelecionada)
                     navController.popBackStack() 
                 },
                 modifier = Modifier
@@ -197,5 +206,5 @@ fun EditarEstrategiaScreen(
 @Preview(showBackground = true)
 @Composable
 fun EditarEstrategiaPreview() {
-    EditarEstrategiaScreen(rememberNavController(), "Expansão de Malha Regional")
+    EditarEstrategiaScreen(rememberNavController(), "ID_TESTE")
 }

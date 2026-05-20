@@ -33,12 +33,21 @@ import br.com.fiap.ui.theme.*
 
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
 
 @Composable
-fun OperadorHomeScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
-    val userData by authViewModel.userData
-    val userName = userData?.get("nome")?.toString() ?: "João"
-    val initials = userName.take(1) + (userData?.get("sobrenome")?.toString()?.take(1) ?: "M")
+fun OperadorHomeScreen(
+    navController: NavController, 
+    authViewModel: AuthViewModel = viewModel(),
+    inovacaoViewModel: InovacaoViewModel = viewModel()
+) {
+    val userData = authViewModel.userData
+    val userName = userData?.get("nome")?.toString() ?: "Operador"
+    val initials = userName.take(1) + (userData?.get("sobrenome")?.toString()?.take(1) ?: "O")
+    
+    val userId = authViewModel.currentUserId ?: ""
+    val minhasIdeias = inovacaoViewModel.ideias.filter { it.userId == userId }
+    val aprovadasCount = minhasIdeias.count { it.status.contains("Aprovada") }
 
     Scaffold(
         bottomBar = { OperadorBottomBar(navController) }
@@ -127,8 +136,8 @@ fun OperadorHomeScreen(navController: NavController, authViewModel: AuthViewMode
                 ) {
                     Column {
                         Text("MEU IMPACTO", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                        Text("3 ideias", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
-                        Text("registradas · 1 aprovada ✨", color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
+                        Text("${minhasIdeias.size} ideias", color = Color.White, fontSize = 32.sp, fontWeight = FontWeight.Bold)
+                        Text("registradas · $aprovadasCount aprovada(s) ✨", color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp)
                     }
                 }
             }
@@ -159,7 +168,7 @@ fun OperadorHomeScreen(navController: NavController, authViewModel: AuthViewMode
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("ESTRATÉGIA DO GRUPO")
-            StrategyCard()
+            StrategyCard(navController)
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("DESTAQUE DA SEMANA")
@@ -207,9 +216,9 @@ fun QuickActionCard(
 }
 
 @Composable
-fun StrategyCard() {
+fun StrategyCard(navController: NavController) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth().clickable { navController.navigate("${Screens.Estrategia.route}/OPERADOR") },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
