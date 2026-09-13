@@ -54,8 +54,8 @@ fun EditarEstrategiaScreen(
 
     LaunchedEffect(estrategia) {
         if (!initialized && estrategia != null) {
-            titulo = estrategia.titulo
-            descricao = estrategia.descricao
+            titulo = estrategia.titulo ?: ""
+            descricao = estrategia.descricao ?: ""
             progresso = estrategia.progresso
             etapaSelecionada = when(estrategia.status) {
                 "Planejamento" -> 0

@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"name": "API JAVA (Spring Boot)",
+			"path": "API JAVA"
+		},
+		{
+			"name": "InovaGAB (Android App)",
+			"path": "."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "automatic"
+	}
+}
+

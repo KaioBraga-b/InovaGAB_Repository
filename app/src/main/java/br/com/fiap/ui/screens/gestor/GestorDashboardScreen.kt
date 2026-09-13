@@ -1,4 +1,4 @@
-package br.com.fiap.ui.screens.lider
+package br.com.fiap.ui.screens.gestor
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -23,22 +23,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import br.com.fiap.ui.components.LiderBottomBar
+import br.com.fiap.ui.components.GestorBottomBar
 import br.com.fiap.ui.navigation.Screens
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
 import br.com.fiap.viewmodel.InovacaoViewModel
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LiderHomeScreen(
-    navController: NavController,
+fun GestorDashboardScreen(
+    navController: NavController, 
     authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
     val userData = authViewModel.userData
-    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString()?.takeIf { it.isNotBlank() } ?: "Líder"
+    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString()?.takeIf { it.isNotBlank() } ?: "Gestor"
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
     val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
 
@@ -53,34 +52,15 @@ fun LiderHomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Liderança", fontWeight = FontWeight.Bold) },
-                actions = {
-                    Surface(
-                        color = Color(0xFFE0E7FF),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = initials,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            color = Color(0xFF4338CA),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
-        bottomBar = { LiderBottomBar(navController) },
+        topBar = { br.com.fiap.ui.components.GestorTopBar(navController, initials) },
+        bottomBar = { GestorBottomBar(navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { navController.navigate(Screens.CriarEstrategia.route) },
-                containerColor = Color(0xFF4338CA),
+                onClick = { navController.navigate(Screens.NovaIdeia.route) },
+                containerColor = Color(0xFF2563EB),
                 contentColor = Color.White
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Nova Estratégia")
+                Icon(Icons.Default.Add, contentDescription = "Nova Ideia")
             }
         }
     ) { innerPadding ->
@@ -93,7 +73,7 @@ fun LiderHomeScreen(
                 .padding(20.dp)
         ) {
             Text(
-                text = "Olá, $userName 👋",
+                text = "Olá, $userName 👋 • Gestão Geral",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 8.dp)
@@ -109,7 +89,7 @@ fun LiderHomeScreen(
                     // Métricas Financeiras Principais
                     Card(
                         modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFF4338CA)),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF1E3A8A)),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
@@ -148,14 +128,13 @@ fun LiderHomeScreen(
 
                     // Grid Secundário
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                        br.com.fiap.ui.screens.gestor.DashboardMetricCard(
+                        DashboardMetricCard(
                             title = "Projetos Ativos",
                             value = dashboardData.projetosAtivos.toString(),
                             subtitle = "Em andamento",
-                            color = Color(0xFF4338CA),
                             modifier = Modifier.weight(1f)
                         )
-                        br.com.fiap.ui.screens.gestor.DashboardMetricCard(
+                        DashboardMetricCard(
                             title = "No Prazo",
                             value = dashboardData.projetosNoPrazo.toString(),
                             subtitle = "Em dias",
@@ -164,10 +143,28 @@ fun LiderHomeScreen(
                         )
                     }
 
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+                        DashboardMetricCard(
+                            title = "Ideias",
+                            value = dashboardData.ideiasRegistradas.toString(),
+                            subtitle = "Banco total",
+                            modifier = Modifier.weight(1f)
+                        )
+                        DashboardMetricCard(
+                            title = "Produtividade",
+                            value = "+%",
+                            subtitle = "Aumento médio",
+                            color = Color(0xFFD97706),
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Text(
-                        text = "RESUMO ESTRATÉGICO",
+                        text = "RETORNOS POR ESTRATÉGIA",
                         style = MaterialTheme.typography.labelLarge,
                         color = Color.Gray,
                         fontWeight = FontWeight.Bold
@@ -180,7 +177,7 @@ fun LiderHomeScreen(
                             modifier = Modifier.fillMaxWidth(),
                             colors = CardDefaults.cardColors(containerColor = Color.White)
                         ) {
-                            Text("Nenhuma estratégia com projetos vinculados.", modifier = Modifier.padding(20.dp), color = Color.Gray)
+                            Text("Nenhum dado por estratégia.", modifier = Modifier.padding(20.dp), color = Color.Gray)
                         }
                     } else {
                         dashboardData.retornosPorEstrategia.forEach { ret ->
@@ -190,7 +187,7 @@ fun LiderHomeScreen(
                                 elevation = CardDefaults.cardElevation(2.dp)
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(ret.estrategiaTitulo, fontWeight = FontWeight.Bold, color = Color(0xFF4338CA))
+                                    Text(ret.estrategiaTitulo, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
                                     Text("${ret.totalProjetos} projetos vinculados", fontSize = 12.sp, color = Color.Gray)
                                     Spacer(modifier = Modifier.height(8.dp))
                                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -201,10 +198,52 @@ fun LiderHomeScreen(
                             }
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    // Curadoria Link
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Gerenciar banco de ideias", fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
+                                Text("Aprovar ou recusar ideias enviadas", color = Color.Gray, fontSize = 12.sp)
+                            }
+                            IconButton(onClick = { navController.navigate(Screens.GestorCuradoria.route) }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFF2563EB))
+                            }
+                        }
+                    }
                     
                     Spacer(modifier = Modifier.height(32.dp))
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun DashboardMetricCard(title: String, value: String, subtitle: String, modifier: Modifier = Modifier, color: Color = Color(0xFF2563EB)) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        elevation = CardDefaults.cardElevation(2.dp),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(title, color = Color.Gray, fontSize = 12.sp, fontWeight = FontWeight.Medium)
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold, color = color)
+            Spacer(modifier = Modifier.height(2.dp))
+            Text(subtitle, color = Color.Gray, fontSize = 11.sp)
         }
     }
 }

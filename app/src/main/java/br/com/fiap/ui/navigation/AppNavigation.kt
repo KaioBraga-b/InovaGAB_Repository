@@ -10,7 +10,8 @@ import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.ui.screens.LoginScreen
 import br.com.fiap.ui.screens.SignUpScreen
 import br.com.fiap.ui.screens.operador.OperadorHomeScreen
-import br.com.fiap.ui.screens.gestor.GestorHomeScreen
+import br.com.fiap.ui.screens.gestor.GestorCuradoriaScreen
+import br.com.fiap.ui.screens.gestor.GestorDashboardScreen
 import br.com.fiap.ui.screens.lider.LiderHomeScreen
 import br.com.fiap.ui.screens.operador.NovaIdeiaScreen
 import br.com.fiap.ui.screens.operador.MinhasIdeiasScreen
@@ -50,13 +51,19 @@ fun AppNavigation() {
             EditarIdeiaScreen(navController, id, inovacaoViewModel = inovacaoViewModel)
         }
         composable(Screens.GestorHome.route) {
-            GestorHomeScreen(navController, authViewModel, inovacaoViewModel)
+            GestorDashboardScreen(navController, authViewModel, inovacaoViewModel)
+        }
+        composable(Screens.GestorCuradoria.route) {
+            GestorCuradoriaScreen(navController, authViewModel, inovacaoViewModel)
+        }
+        composable(Screens.GestorIdeiasAprovadas.route) {
+            br.com.fiap.ui.screens.gestor.GestorIdeiasAprovadasScreen(navController, authViewModel, inovacaoViewModel)
         }
         composable(Screens.GestorProjetos.route) {
             ProjetosScreen(navController, userRole = "GESTOR", authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)
         }
         composable(Screens.LiderHome.route) {
-            LiderHomeScreen(navController, authViewModel)
+            LiderHomeScreen(navController, authViewModel, inovacaoViewModel)
         }
         composable(Screens.LiderProjetos.route) {
             ProjetosScreen(navController, userRole = "LIDER", authViewModel = authViewModel, inovacaoViewModel = inovacaoViewModel)

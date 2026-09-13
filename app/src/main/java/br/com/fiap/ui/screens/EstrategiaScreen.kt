@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -56,6 +57,10 @@ fun EstrategiaScreen(
         userRole.take(1)
     }
 
+    LaunchedEffect(Unit) {
+        inovacaoViewModel.fetchEstrategias()
+    }
+
     Scaffold(
         bottomBar = {
             when (userRole) {
@@ -66,7 +71,7 @@ fun EstrategiaScreen(
             }
         },
         floatingActionButton = {
-            if (userRole == "LIDER") {
+            if (br.com.fiap.model.Permissions.canManageStrategies(userRole)) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screens.CriarEstrategia.route) },
                     containerColor = Color(0xFF2563EB),

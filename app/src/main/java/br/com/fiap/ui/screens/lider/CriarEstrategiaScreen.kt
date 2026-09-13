@@ -10,6 +10,12 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,7 +51,14 @@ fun CriarEstrategiaScreen(
 
     var novaEstrategiaTitulo by remember { mutableStateOf("") }
     var novaEstrategiaDescricao by remember { mutableStateOf("") }
+    var novaEstrategiaCategoria by remember { mutableStateOf("") }
+    var novaEstrategiaCampanha by remember { mutableStateOf("") }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
+    
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
     val etapas = listOf("Planejamento", "Em andamento", "Concluído")
 
     Scaffold(
@@ -110,13 +123,18 @@ fun CriarEstrategiaScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Formulário de Criação
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(500)) + fadeIn(animationSpec = tween(500))
                 ) {
+                    Column {
+                        // Formulário de Criação
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = Color.White),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
                             text = "Cadastrar Nova Estratégia",
@@ -157,6 +175,40 @@ fun CriarEstrategiaScreen(
                             )
                         )
 
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedTextField(
+                            value = novaEstrategiaCategoria,
+                            onValueChange = { novaEstrategiaCategoria = it },
+                            placeholder = { Text("Categoria (ex: Receita, Custo)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFFE5E7EB)
+                            ),
+                            singleLine = true
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        OutlinedTextField(
+                            value = novaEstrategiaCampanha,
+                            onValueChange = { novaEstrategiaCampanha = it },
+                            placeholder = { Text("Campanha (ex: 2025Q1)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color.Black,
+                                unfocusedTextColor = Color.Black,
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFFE5E7EB)
+                            ),
+                            singleLine = true
+                        )
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
@@ -193,48 +245,70 @@ fun CriarEstrategiaScreen(
 
                         Spacer(modifier = Modifier.height(20.dp))
                         
+                        var isLoading by remember { mutableStateOf(false) }
+
                         Button(
                             onClick = {
-                                if (novaEstrategiaTitulo.isNotBlank()) {
-                                    inovacaoViewModel.adicionarEstrategia(Estrategia(
-                                        titulo = novaEstrategiaTitulo,
-                                        descricao = novaEstrategiaDescricao,
-                                        status = etapas[etapaSelecionada],
-                                        statusColor = when(etapaSelecionada) {
-                                            0 -> Color(0xFFF3F4F6).toArgb()
-                                            1 -> Color(0xFFEFF6FF).toArgb()
-                                            2 -> Color(0xFFDCFCE7).toArgb()
-                                            else -> Color.Gray.toArgb()
-                                        },
-                                        statusTextColor = when(etapaSelecionada) {
-                                            0 -> Color(0xFF6B7280).toArgb()
-                                            1 -> Color(0xFF2563EB).toArgb()
-                                            2 -> Color(0xFF16A34A).toArgb()
-                                            else -> Color.Black.toArgb()
-                                        },
-                                        progresso = when(etapaSelecionada) {
-                                            0 -> 0.1
-                                            1 -> 0.5
-                                            2 -> 1.0
-                                            else -> 0.0
-                                        },
-                                        dataCriacao = "Criada agora"
-                                    ))
-                                    navController.popBackStack()
+                                if (novaEstrategiaTitulo.isNotBlank() && !isLoading) {
+                                    isLoading = true
+                                    inovacaoViewModel.adicionarEstrategia(
+                                        Estrategia(
+                                            titulo = novaEstrategiaTitulo,
+                                            descricao = novaEstrategiaDescricao,
+                                            status = etapas[etapaSelecionada],
+                                            statusColor = when(etapaSelecionada) {
+                                                0 -> Color(0xFFF3F4F6).toArgb()
+                                                1 -> Color(0xFFEFF6FF).toArgb()
+                                                2 -> Color(0xFFDCFCE7).toArgb()
+                                                else -> Color.Gray.toArgb()
+                                            },
+                                            statusTextColor = when(etapaSelecionada) {
+                                                0 -> Color(0xFF6B7280).toArgb()
+                                                1 -> Color(0xFF2563EB).toArgb()
+                                                2 -> Color(0xFF16A34A).toArgb()
+                                                else -> Color.Black.toArgb()
+                                            },
+                                            progresso = when(etapaSelecionada) {
+                                                0 -> 0.1
+                                                1 -> 0.5
+                                                2 -> 1.0
+                                                else -> 0.0
+                                            },
+                                            dataCriacao = "Criada agora",
+                                            categoria = novaEstrategiaCategoria,
+                                            campanha = novaEstrategiaCampanha
+                                        )
+                                    ) { success ->
+                                        isLoading = false
+                                        if (success) {
+                                            navController.popBackStack()
+                                        }
+                                    }
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
+                            enabled = !isLoading
                         ) {
-                            Icon(Icons.Default.Add, contentDescription = null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Cadastrar Estratégia")
+                            if (isLoading) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(24.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                Icon(Icons.Default.Add, contentDescription = null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Cadastrar Estratégia")
+                            }
                         }
                     }
                 }
+            } // close Column
+        } // close AnimatedVisibility
 
-                Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Estratégias Recentes",
@@ -262,7 +336,9 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null,
     val canEdit = br.com.fiap.model.Permissions.canEditStrategy(userRole)
     
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(400)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -283,13 +359,13 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null,
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = estrategia.titulo,
+                            text = estrategia.titulo ?: "",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
                             color = Color(0xFF1E3A8A)
                         )
                         Text(
-                            text = estrategia.dataCriacao,
+                            text = estrategia.dataCriacao ?: "",
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray
                         )
@@ -302,7 +378,7 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null,
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = estrategia.status,
+                            text = estrategia.status ?: "",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             color = Color(estrategia.statusTextColor),
                             fontSize = 11.sp,
@@ -330,15 +406,60 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null,
             }
 
             Text(
-                text = estrategia.descricao,
+                text = estrategia.descricao ?: "",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.DarkGray,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
 
+            if (!estrategia.categoria.isNullOrBlank() || !estrategia.campanha.isNullOrBlank()) {
+                Row(modifier = Modifier.padding(bottom = 12.dp)) {
+                    if (!estrategia.categoria.isNullOrBlank()) {
+                        Surface(
+                            color = Color(0xFFF3F4F6),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "Cat: ${estrategia.categoria}",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                color = Color(0xFF4B5563),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                    if (!estrategia.categoria.isNullOrBlank() && !estrategia.campanha.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.width(8.dp))
+                    }
+                    if (!estrategia.campanha.isNullOrBlank()) {
+                        Surface(
+                            color = Color(0xFFF3F4F6),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "Campanha: ${estrategia.campanha}",
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                                color = Color(0xFF4B5563),
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             Row(verticalAlignment = Alignment.CenterVertically) {
+                var targetProgress by remember { mutableStateOf(0f) }
+                LaunchedEffect(estrategia.progresso) {
+                    targetProgress = estrategia.progresso.toFloat()
+                }
+                
+                val animatedProgress by animateFloatAsState(
+                    targetValue = targetProgress,
+                    animationSpec = tween(durationMillis = 1000),
+                    label = "progressAnimation"
+                )
+
                 LinearProgressIndicator(
-                    progress = { estrategia.progresso.toFloat() },
+                    progress = { animatedProgress },
                     modifier = Modifier
                         .weight(1f)
                         .height(6.dp),

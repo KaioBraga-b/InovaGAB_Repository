@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import br.com.fiap.ui.components.OperadorBottomBar
+import br.com.fiap.ui.components.DynamicBottomBar
 import br.com.fiap.ui.theme.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.InovacaoViewModel
@@ -41,7 +41,7 @@ fun MinhasIdeiasScreen(
     val ideias = inovacaoViewModel.ideias.filter { it.userId == userId }
 
     Scaffold(
-        bottomBar = { OperadorBottomBar(navController) }
+        bottomBar = { DynamicBottomBar(navController, authViewModel) }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -132,7 +132,7 @@ fun IdeiaCard(ideia: Ideia, onEditClick: () -> Unit) {
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = ideia.titulo,
+                        text = ideia.titulo ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E3A8A)
@@ -145,7 +145,7 @@ fun IdeiaCard(ideia: Ideia, onEditClick: () -> Unit) {
                         shape = RoundedCornerShape(8.dp)
                     ) {
                         Text(
-                            text = ideia.status,
+                            text = ideia.status ?: "",
                             modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             color = Color(ideia.statusTextColor),
                             fontSize = 11.sp,
@@ -175,14 +175,14 @@ fun IdeiaCard(ideia: Ideia, onEditClick: () -> Unit) {
                     .fillMaxWidth()
                     .height(6.dp)
                     .padding(vertical = 4.dp),
-                color = if (ideia.status.contains("Aprovada")) Color(0xFF10B981) else Color(0xFF2563EB),
+                color = if (ideia.status?.contains("Aprovada") == true) Color(0xFF10B981) else Color(0xFF2563EB),
                 trackColor = Color(0xFFE5E7EB),
                 strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
             )
 
-            if (ideia.etapa.isNotEmpty()) {
+            if (!ideia.etapa.isNullOrEmpty()) {
                 Text(
-                    text = ideia.etapa,
+                    text = ideia.etapa ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     modifier = Modifier.padding(top = 4.dp)

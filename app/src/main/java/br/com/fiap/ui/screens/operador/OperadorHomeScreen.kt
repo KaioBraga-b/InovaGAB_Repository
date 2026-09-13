@@ -42,12 +42,16 @@ fun OperadorHomeScreen(
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
     val userData = authViewModel.userData
-    val userName = userData?.get("nome")?.toString() ?: "Operador"
-    val initials = userName.take(1) + (userData?.get("sobrenome")?.toString()?.take(1) ?: "O")
+    val rawName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
+    val userName = if (rawName.isNotBlank()) rawName else "Operador"
     
+    val rawSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val userSobrenome = if (rawSobrenome.isNotBlank()) rawSobrenome else ""
+    
+    val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
     val userId = authViewModel.currentUserId ?: ""
     val minhasIdeias = inovacaoViewModel.ideias.filter { it.userId == userId }
-    val aprovadasCount = minhasIdeias.count { it.status.contains("Aprovada") }
+    val aprovadasCount = minhasIdeias.count { it.status?.contains("Aprovada") == true }
 
     Scaffold(
         bottomBar = { OperadorBottomBar(navController) }
@@ -168,11 +172,7 @@ fun OperadorHomeScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("ESTRATÉGIA DO GRUPO")
-            StrategyCard(navController)
-
-            Spacer(modifier = Modifier.height(24.dp))
-            SectionTitle("DESTAQUE DA SEMANA")
-            HighlightCard()
+            StrategyCard(navController, inovacaoViewModel)
         }
     }
 }
@@ -216,7 +216,9 @@ fun QuickActionCard(
 }
 
 @Composable
-fun StrategyCard(navController: NavController) {
+fun StrategyCard(navController: NavController, inovacaoViewModel: InovacaoViewModel) {
+    val estrategia = inovacaoViewModel.estrategias.firstOrNull()
+    
     Card(
         modifier = Modifier.fillMaxWidth().clickable { navController.navigate("${Screens.Estrategia.route}/OPERADOR") },
         shape = RoundedCornerShape(16.dp),
@@ -233,42 +235,20 @@ fun StrategyCard(navController: NavController) {
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🎯 Objetivo 2026", color = Color(0xFF2563EB), fontWeight = FontWeight
-                        .Bold, fontSize = 12.sp)
+                    Text("🎯 Estratégia em Destaque", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold, fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(8.dp))
                     Surface(color = Color(0xFFEFF6FF), shape = RoundedCornerShape(4.dp)) {
-                        Text("Novo", color = Color(0xFF2563EB), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                        Text("Ativa", color = Color(0xFF2563EB), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                Text("Digitalização da Operação", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp)
-                Text("Reduzir processos manuais em 40% até dezembro — Ver todos os direcionamentos", color = Color.Gray, fontSize = 12.sp)
-            }
-        }
-    }
-}
-
-@Composable
-fun HighlightCard() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .background(Color(0xFFFEF3C7), CircleShape),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("🏆", fontSize = 24.sp)
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text("Maria Silva foi reconhecida!", fontWeight = FontWeight.Bold, color = Color.Black)
-                Text("Ideia aprovada: Rota inteligente via app...", color = Color.Gray, fontSize = 12.sp)
+                if (estrategia != null) {
+                    Text(estrategia.titulo ?: "", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp, maxLines = 1)
+                    Text(estrategia.descricao ?: "", color = Color.Gray, fontSize = 12.sp, maxLines = 2)
+                } else {
+                    Text("Nenhuma estratégia cadastrada", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp)
+                    Text("Aguardando novas orientações do Gestor", color = Color.Gray, fontSize = 12.sp)
+                }
             }
         }
     }

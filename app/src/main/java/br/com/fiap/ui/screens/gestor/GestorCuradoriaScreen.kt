@@ -36,19 +36,32 @@ import br.com.fiap.viewmodel.Ideia
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GestorHomeScreen(
+fun GestorCuradoriaScreen(
     navController: NavController, 
     authViewModel: AuthViewModel = viewModel(),
     inovacaoViewModel: InovacaoViewModel = viewModel()
 ) {
     val userData = authViewModel.userData
-    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: "Gestor"
-    val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
-    val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "P")
+    val rawName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
+    val userName = if (rawName.isNotBlank()) rawName else "Gestor"
+    
+    val rawSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val userSobrenome = if (rawSobrenome.isNotBlank()) rawSobrenome else ""
+    
+    val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
 
-    val ideias = inovacaoViewModel.ideias
+    val todasIdeias = inovacaoViewModel.ideias
+    var selectedTab by remember { mutableStateOf(0) }
+    
+    val ideiasPendentes = todasIdeias.filter { it.status == "Enviada" || it.status == "Em análise" }
+    val ideiasRecusadas = todasIdeias.filter { it.status == "Recusada" }
+    
+    val ideias = if (selectedTab == 0) ideiasPendentes else ideiasRecusadas
+
+    LaunchedEffect(Unit) { inovacaoViewModel.fetchIdeias() }
 
     Scaffold(
+        topBar = { br.com.fiap.ui.components.GestorTopBar(navController, initials) },
         bottomBar = { GestorBottomBar(navController) }
     ) { innerPadding ->
         Column(
@@ -60,53 +73,7 @@ fun GestorHomeScreen(
         ) {
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        append("Inova")
-                        withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
-                            append("GAB")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = Color(0xFFEFF6FF),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = "Gestor",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            color = Color(0xFF2563EB),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    IconButton(
-                        onClick = { navController.navigate(Screens.Profile.route) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFFEF4444), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
+            // Header Removido pois usamos TopBar
 
             Text(
                 text = "Olá, $userName 👋 • Gestão",
@@ -125,18 +92,27 @@ fun GestorHomeScreen(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 FilterChip(
-                    selected = true,
-                    onClick = { },
-                    label = { Text("Pendentes (${ideias.count { it.status == "Enviada" || it.status == "Em análise" }})") },
+                    selected = selectedTab == 0,
+                    onClick = { selectedTab = 0 },
+                    label = { Text("Pendentes (${ideiasPendentes.size})") },
                     colors = FilterChipDefaults.filterChipColors(
                         selectedContainerColor = Color(0xFFFEF3C7),
                         selectedLabelColor = Color(0xFFD97706)
                     )
                 )
                 FilterChip(
+                    selected = selectedTab == 1,
+                    onClick = { selectedTab = 1 },
+                    label = { Text("✕ Recusadas (${ideiasRecusadas.size})") },
+                    colors = FilterChipDefaults.filterChipColors(
+                        selectedContainerColor = Color(0xFFFEE2E2),
+                        selectedLabelColor = Color(0xFFEF4444)
+                    )
+                )
+                FilterChip(
                     selected = false,
-                    onClick = { },
-                    label = { Text("✓ Aprovadas (${ideias.count { it.status.contains("Aprovada") }})") },
+                    onClick = { navController.navigate(Screens.GestorIdeiasAprovadas.route) },
+                    label = { Text("✓ Aprovadas (${todasIdeias.count { it.status?.contains("Aprovada") == true }})") },
                     colors = FilterChipDefaults.filterChipColors(
                         containerColor = Color(0xFFDCFCE7),
                         labelColor = Color(0xFF16A34A)
@@ -180,7 +156,7 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = ideia.titulo,
+                    text = ideia.titulo ?: "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f),
@@ -192,7 +168,7 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                     shape = RoundedCornerShape(8.dp)
                 ) {
                     Text(
-                        text = ideia.prioridade,
+                        text = ideia.prioridade ?: "",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                         color = Color(ideia.prioridadeColor),
                         fontSize = 11.sp,
@@ -209,7 +185,7 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
             )
 
             Text(
-                text = ideia.descricao,
+                text = ideia.descricao ?: "",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.DarkGray,
                 modifier = Modifier.padding(vertical = 8.dp),
@@ -217,30 +193,6 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Surface(
-                    color = Color.White,
-                    shape = RoundedCornerShape(8.dp),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ArrowUpward,
-                            contentDescription = null,
-                            modifier = Modifier.size(14.dp),
-                            tint = Color.Gray
-                        )
-                        Text(
-                            text = "${ideia.votos} votos",
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.Gray
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "Impacto: ${ideia.impacto} · Obj: ${ideia.objetivo}",
                     style = MaterialTheme.typography.bodySmall,
@@ -283,7 +235,7 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     Button(
-                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id, "Aprovada") },
+                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id ?: "", "Aprovada") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
@@ -304,7 +256,7 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                     }
                     
                     OutlinedButton(
-                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id, "Recusada") },
+                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id ?: "", "Recusada") },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB)),
@@ -340,6 +292,6 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
 
 @Preview(showBackground = true)
 @Composable
-fun GestorHomePreview() {
-    GestorHomeScreen(rememberNavController())
+fun GestorCuradoriaPreview() {
+    GestorCuradoriaScreen(rememberNavController())
 }

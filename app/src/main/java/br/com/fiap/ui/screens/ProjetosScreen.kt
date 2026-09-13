@@ -10,7 +10,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -53,7 +61,16 @@ fun ProjetosScreen(
         if (userRole == "GESTOR") "G" else "L"
     }
 
+    LaunchedEffect(Unit) {
+        inovacaoViewModel.fetchProjetos()
+    }
+
     Scaffold(
+        topBar = {
+            if (userRole == "GESTOR") {
+                br.com.fiap.ui.components.GestorTopBar(navController, initials)
+            }
+        },
         bottomBar = {
             if (userRole == "GESTOR") GestorBottomBar(navController)
             else LiderBottomBar(navController)
@@ -81,48 +98,50 @@ fun ProjetosScreen(
             Spacer(modifier = Modifier.height(24.dp))
 
             // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        append("Inova")
-                        withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
-                            append("GAB")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
+            if (userRole != "GESTOR") {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            append("Inova")
+                            withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
+                                append("GAB")
+                            }
+                        },
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFF1E3A8A)
+                    )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Surface(
-                        color = Color(0xFFEFF6FF),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Text(
-                            text = if (userRole == "GESTOR") "Gestor" else "Líder",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            color = Color(0xFF2563EB),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 12.sp
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    IconButton(
-                        onClick = { navController.navigate(Screens.Profile.route) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(if (userRole == "GESTOR") Color(0xFFEF4444) else Color(0xFF8B5CF6), CircleShape),
-                            contentAlignment = Alignment.Center
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Surface(
+                            color = Color(0xFFEFF6FF),
+                            shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text(
+                                text = "Líder",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                                color = Color(0xFF2563EB),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        IconButton(
+                            onClick = { navController.navigate(Screens.Profile.route) },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(Color(0xFF8B5CF6), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            }
                         }
                     }
                 }
@@ -153,7 +172,9 @@ fun ProjetosScreen(
 @Composable
 fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit: Boolean = false) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(animationSpec = tween(400)),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -166,17 +187,28 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = projeto.titulo,
+                        text = projeto.titulo ?: "",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = Color(0xFF1E3A8A)
                     )
                     Text(
-                        text = "${projeto.area} · ${projeto.periodo}",
+                        text = "${projeto.area} · ${projeto.periodo}" +
+                               (if (!projeto.investimento.isNullOrBlank()) " · R$ ${projeto.investimento}" else ""),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
                     )
+                    
+                    if (!projeto.estrategiaTitulo.isNullOrBlank()) {
+                        Text(
+                            text = "Estratégia: ${projeto.estrategiaTitulo}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFF2563EB), // Blue primary
+                            fontWeight = FontWeight.Medium,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
+                    }
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -185,7 +217,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Text(
-                            text = projeto.status,
+                            text = projeto.status ?: "",
                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                             color = Color(projeto.statusColor),
                             fontSize = 11.sp,
@@ -243,8 +275,19 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
             Spacer(modifier = Modifier.height(12.dp))
 
             // Barra de Progresso
+            var targetProgress by remember { mutableStateOf(0f) }
+            LaunchedEffect(projeto.progresso) {
+                targetProgress = projeto.progresso.toFloat()
+            }
+            
+            val animatedProgress by animateFloatAsState(
+                targetValue = targetProgress,
+                animationSpec = tween(durationMillis = 1000),
+                label = "progressAnimation"
+            )
+
             LinearProgressIndicator(
-                progress = { projeto.progresso.toFloat() },
+                progress = { animatedProgress },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -261,7 +304,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = projeto.progressoTexto,
+                    text = projeto.progressoTexto ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold

@@ -19,12 +19,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import br.com.fiap.ui.components.GestorBottomBar
 import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.theme.*
 import br.com.fiap.viewmodel.InovacaoViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.api.Area
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,21 +45,40 @@ fun EditarProjetoScreen(
     val projeto = inovacaoViewModel.projetos.find { it.id == projetoId }
     
     var titulo by remember { mutableStateOf("") }
-    var area by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") } // fallback original
+    var areaSelecionada by remember { mutableStateOf<Area?>(null) }
+    var expandedArea by remember { mutableStateOf(false) }
+    var showNewAreaDialog by remember { mutableStateOf(false) }
+    var novaAreaNome by remember { mutableStateOf("") }
+    var investimento by remember { mutableStateOf("") }
+    var expandedEstrategia by remember { mutableStateOf(false) }
+    var selectedEstrategia by remember { mutableStateOf<br.com.fiap.viewmodel.Estrategia?>(null) }
     var progresso by remember { mutableDoubleStateOf(0.0) }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
+    var resultadoValor by remember { mutableStateOf("") }
+    var resultadoRoi by remember { mutableStateOf("") }
     var initialized by remember { mutableStateOf(false) }
 
     val etapas = listOf("Ideação", "Aprovação", "Execução", "Resultado")
 
     LaunchedEffect(projeto) {
         if (!initialized && projeto != null) {
-            titulo = projeto.titulo
-            area = projeto.area
+            titulo = projeto.titulo ?: ""
+            area = projeto.area ?: ""
+            areaSelecionada = inovacaoViewModel.areas.find { it.nome == projeto.area }
+            investimento = projeto.investimento ?: ""
+            selectedEstrategia = inovacaoViewModel.estrategias.find { it.id == projeto.estrategiaId }
             progresso = projeto.progresso
             etapaSelecionada = projeto.etapaAtiva
+            resultadoValor = projeto.resultadoValor ?: ""
+            resultadoRoi = projeto.resultadoRoi ?: ""
             initialized = true
         }
+    }
+    
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isVisible = true
     }
 
     Scaffold(
@@ -95,14 +119,19 @@ fun EditarProjetoScreen(
                     .verticalScroll(rememberScrollState())
                     .padding(24.dp)
             ) {
-                Text(
-                    text = "Informações Básicas",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
-                
-                Spacer(modifier = Modifier.height(12.dp))
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(500)) + fadeIn(animationSpec = tween(500))
+                ) {
+                    Column {
+                        Text(
+                            text = "Informações Básicas",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E3A8A)
+                        )
+                        
+                        Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedTextField(
                     value = titulo,
@@ -120,10 +149,89 @@ fun EditarProjetoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                Text(
+                    text = "Área Responsável",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Gray
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expandedArea,
+                    onExpandedChange = { expandedArea = !expandedArea }
+                ) {
+                    OutlinedTextField(
+                        value = areaSelecionada?.nome ?: area.ifBlank { "Selecione uma área" },
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedArea) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BlueSecondary,
+                            unfocusedBorderColor = BorderGray
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedArea,
+                        onDismissRequest = { expandedArea = false }
+                    ) {
+                        inovacaoViewModel.areas.forEach { a ->
+                            DropdownMenuItem(
+                                text = { Text(a.nome) },
+                                onClick = {
+                                    areaSelecionada = a
+                                    expandedArea = false
+                                }
+                            )
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                        DropdownMenuItem(
+                            text = { 
+                                Text("➕ Adicionar nova área", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold) 
+                            },
+                            onClick = {
+                                expandedArea = false
+                                showNewAreaDialog = true
+                            }
+                        )
+                    }
+                }
+
+                if (showNewAreaDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showNewAreaDialog = false },
+                        title = { Text("Nova Área Responsável") },
+                        text = {
+                            OutlinedTextField(
+                                value = novaAreaNome,
+                                onValueChange = { novaAreaNome = it },
+                                label = { Text("Nome da Área") },
+                                singleLine = true
+                            )
+                        },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                if (novaAreaNome.isNotBlank()) {
+                                    inovacaoViewModel.adicionarArea(novaAreaNome)
+                                    areaSelecionada = Area(nome = novaAreaNome)
+                                    novaAreaNome = ""
+                                    showNewAreaDialog = false
+                                }
+                            }) { Text("Salvar") }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showNewAreaDialog = false }) { Text("Cancelar") }
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 OutlinedTextField(
-                    value = area,
-                    onValueChange = { area = it },
-                    label = { Text("Área Responsável") },
+                    value = investimento,
+                    onValueChange = { investimento = it },
+                    label = { Text("Investimento (R$)") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
                     colors = OutlinedTextFieldDefaults.colors(
@@ -134,8 +242,55 @@ fun EditarProjetoScreen(
                     )
                 )
 
-                Spacer(modifier = Modifier.height(32.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
+                Text(
+                    text = "Estratégia Vinculada",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.Gray
+                )
+                ExposedDropdownMenuBox(
+                    expanded = expandedEstrategia,
+                    onExpandedChange = { expandedEstrategia = !expandedEstrategia }
+                ) {
+                    OutlinedTextField(
+                        value = selectedEstrategia?.titulo ?: "Selecione uma estratégia",
+                        onValueChange = {},
+                        readOnly = true,
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstrategia) },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .menuAnchor(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = BlueSecondary,
+                            unfocusedBorderColor = BorderGray
+                        )
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expandedEstrategia,
+                        onDismissRequest = { expandedEstrategia = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Nenhuma (Opcional)") },
+                            onClick = {
+                                selectedEstrategia = null
+                                expandedEstrategia = false
+                            }
+                        )
+                        inovacaoViewModel.estrategias.forEach { est ->
+                            DropdownMenuItem(
+                                text = { Text(est.titulo ?: "") },
+                                onClick = {
+                                    selectedEstrategia = est
+                                    expandedEstrategia = false
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(32.dp))
                 Text(
                     text = "Progresso Atual",
                     style = MaterialTheme.typography.titleSmall,
@@ -199,25 +354,81 @@ fun EditarProjetoScreen(
                     }
                 }
 
+                Spacer(modifier = Modifier.height(32.dp))
+
+                Text(
+                    text = "Resultados Alcançados (Opcional)",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF1E3A8A)
+                )
+                
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = resultadoValor,
+                        onValueChange = { resultadoValor = it },
+                        label = { Text("Valor Mensal (ex: R$ 12k)") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = BlueSecondary,
+                            unfocusedBorderColor = BorderGray
+                        )
+                    )
+
+                    OutlinedTextField(
+                        value = resultadoRoi,
+                        onValueChange = { resultadoRoi = it },
+                        label = { Text("ROI (ex: 220%)") },
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedTextColor = Color.Black,
+                            focusedBorderColor = BlueSecondary,
+                            unfocusedBorderColor = BorderGray
+                        )
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(40.dp))
 
                 Button(
-                    onClick = { 
+                    onClick = {
                         if (titulo.isNotBlank()) {
-                            inovacaoViewModel.atualizarProjeto(projetoId, titulo, area, progresso, etapaSelecionada)
-                            navController.popBackStack() 
+                            inovacaoViewModel.atualizarProjeto(
+                                id = projetoId,
+                                titulo = titulo,
+                                area = areaSelecionada?.nome ?: area.ifBlank { "Geral" },
+                                novoProgresso = progresso,
+                                novaEtapa = etapaSelecionada,
+                                resultadoValor = resultadoValor.takeIf { it.isNotBlank() },
+                                resultadoRoi = resultadoRoi.takeIf { it.isNotBlank() },
+                                investimento = investimento,
+                                estrategiaId = selectedEstrategia?.id,
+                                estrategiaTitulo = selectedEstrategia?.titulo
+                            )
+                            navController.popBackStack()
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = BluePrimary)
                 ) {
-                    Text("Salvar Alterações", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+                    Text("Salvar Alterações", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
-            }
-        }
-    }
-}
+            } // Column 124
+        } // AnimatedVisibility 120
+    } // Column 114
+    } // Column 107
+    } // Scaffold 106
+} // fun EditarProjetoScreen
 
 @Preview(showBackground = true)
 @Composable

@@ -19,17 +19,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import br.com.fiap.ui.components.OperadorBottomBar
+import br.com.fiap.ui.components.DynamicBottomBar
 import br.com.fiap.ui.theme.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.InovacaoViewModel
+import br.com.fiap.viewmodel.AuthViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditarIdeiaScreen(
     navController: NavController,
     ideiaId: String,
-    inovacaoViewModel: InovacaoViewModel = viewModel()
+    inovacaoViewModel: InovacaoViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val ideia = inovacaoViewModel.ideias.find { it.id == ideiaId }
     
@@ -40,9 +42,9 @@ fun EditarIdeiaScreen(
 
     LaunchedEffect(ideia) {
         if (!initialized && ideia != null) {
-            titulo = ideia.titulo
-            descricao = ideia.descricao
-            categoria = ideia.area
+            titulo = ideia.titulo ?: ""
+            descricao = ideia.descricao ?: ""
+            categoria = ideia.area ?: ""
             initialized = true
         }
     }
@@ -79,7 +81,7 @@ fun EditarIdeiaScreen(
                 )
             )
         },
-        bottomBar = { OperadorBottomBar(navController) }
+        bottomBar = { DynamicBottomBar(navController, authViewModel) }
     ) { innerPadding ->
         Column(
             modifier = Modifier

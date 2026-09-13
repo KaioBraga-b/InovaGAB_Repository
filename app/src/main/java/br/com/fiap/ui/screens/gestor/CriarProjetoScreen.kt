@@ -10,6 +10,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.core.tween
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +35,7 @@ import br.com.fiap.viewmodel.Projeto
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.ui.screens.ProjetoCard
 import br.com.fiap.viewmodel.AuthViewModel
+import br.com.fiap.api.Area
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,9 +48,22 @@ fun CriarProjetoScreen(
     val userRole = (userData?.get("role") ?: userData?.get("Role"))?.toString() ?: "GESTOR"
 
     var titulo by remember { mutableStateOf("") }
-    var area by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") } // manteremos para fallback
+    var areaSelecionada by remember { mutableStateOf<Area?>(null) }
+    var expandedArea by remember { mutableStateOf(false) }
+    var showNewAreaDialog by remember { mutableStateOf(false) }
+    var novaAreaNome by remember { mutableStateOf("") }
+    
+    var investimento by remember { mutableStateOf("") }
+    var expandedEstrategia by remember { mutableStateOf(false) }
+    var selectedEstrategia by remember { mutableStateOf<br.com.fiap.viewmodel.Estrategia?>(null) }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
     val etapas = listOf("Ideação", "Aprovação", "Execução", "Resultado")
+
+    var isVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isVisible = true
+    }
 
     val projetos = inovacaoViewModel.projetos
 
@@ -111,8 +129,13 @@ fun CriarProjetoScreen(
 
                 Spacer(modifier = Modifier.height(24.dp))
 
-                // Formulário de Criação
-                Card(
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = slideInVertically(initialOffsetY = { 50 }, animationSpec = tween(500)) + fadeIn(animationSpec = tween(500))
+                ) {
+                    Column {
+                        // Formulário de Criação
+                        Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.White),
@@ -149,10 +172,89 @@ fun CriarProjetoScreen(
                             style = MaterialTheme.typography.labelMedium,
                             color = Color.Gray
                         )
+                        ExposedDropdownMenuBox(
+                            expanded = expandedArea,
+                            onExpandedChange = { expandedArea = !expandedArea }
+                        ) {
+                            OutlinedTextField(
+                                value = areaSelecionada?.nome ?: "Selecione uma área",
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedArea) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedArea,
+                                onDismissRequest = { expandedArea = false }
+                            ) {
+                                inovacaoViewModel.areas.forEach { a ->
+                                    DropdownMenuItem(
+                                        text = { Text(a.nome) },
+                                        onClick = {
+                                            areaSelecionada = a
+                                            expandedArea = false
+                                        }
+                                    )
+                                }
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                DropdownMenuItem(
+                                    text = { 
+                                        Text("➕ Adicionar nova área", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold) 
+                                    },
+                                    onClick = {
+                                        expandedArea = false
+                                        showNewAreaDialog = true
+                                    }
+                                )
+                            }
+                        }
+
+                        if (showNewAreaDialog) {
+                            AlertDialog(
+                                onDismissRequest = { showNewAreaDialog = false },
+                                title = { Text("Nova Área Responsável") },
+                                text = {
+                                    OutlinedTextField(
+                                        value = novaAreaNome,
+                                        onValueChange = { novaAreaNome = it },
+                                        label = { Text("Nome da Área") },
+                                        singleLine = true
+                                    )
+                                },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        if (novaAreaNome.isNotBlank()) {
+                                            inovacaoViewModel.adicionarArea(novaAreaNome)
+                                            areaSelecionada = Area(nome = novaAreaNome)
+                                            novaAreaNome = ""
+                                            showNewAreaDialog = false
+                                        }
+                                    }) { Text("Salvar") }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showNewAreaDialog = false }) { Text("Cancelar") }
+                                }
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Investimento (R$)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
                         OutlinedTextField(
-                            value = area,
-                            onValueChange = { area = it },
-                            placeholder = { Text("Ex: Operação, RH...") },
+                            value = investimento,
+                            onValueChange = { investimento = it },
+                            placeholder = { Text("Ex: 50000") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
@@ -163,6 +265,54 @@ fun CriarProjetoScreen(
                             ),
                             singleLine = true
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Estratégia Vinculada",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        ExposedDropdownMenuBox(
+                            expanded = expandedEstrategia,
+                            onExpandedChange = { expandedEstrategia = !expandedEstrategia }
+                        ) {
+                            OutlinedTextField(
+                                value = selectedEstrategia?.titulo ?: "Selecione uma estratégia",
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstrategia) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .menuAnchor(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedEstrategia,
+                                onDismissRequest = { expandedEstrategia = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Nenhuma (Opcional)") },
+                                    onClick = {
+                                        selectedEstrategia = null
+                                        expandedEstrategia = false
+                                    }
+                                )
+                                inovacaoViewModel.estrategias.forEach { est ->
+                                    DropdownMenuItem(
+                                        text = { Text(est.titulo ?: "") },
+                                        onClick = {
+                                            selectedEstrategia = est
+                                            expandedEstrategia = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
@@ -222,7 +372,7 @@ fun CriarProjetoScreen(
                                             3 -> Color(0xFFDCFCE7).toArgb()
                                             else -> Color(0xFFF3F4F6).toArgb()
                                         },
-                                        area = area.ifBlank { "Geral" },
+                                        area = areaSelecionada?.nome ?: area.ifBlank { "Geral" },
                                         periodo = "Iniciado agora",
                                         progresso = when(etapaSelecionada) {
                                             0 -> 0.1
@@ -238,7 +388,10 @@ fun CriarProjetoScreen(
                                             3 -> "100% concluído"
                                             else -> "A iniciar"
                                         },
-                                        etapaAtiva = etapaSelecionada
+                                        etapaAtiva = etapaSelecionada,
+                                        investimento = investimento,
+                                        estrategiaId = selectedEstrategia?.id,
+                                        estrategiaTitulo = selectedEstrategia?.titulo
                                     ))
                                     navController.popBackStack()
                                 }
@@ -253,8 +406,10 @@ fun CriarProjetoScreen(
                         }
                     }
                 }
+            } // close Column
+        } // close AnimatedVisibility
 
-                Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
                     text = "Projetos Recentes",

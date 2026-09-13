@@ -176,7 +176,7 @@ fun ProjetoCard(projeto: Projeto) {
                 verticalAlignment = Alignment.Top
             ) {
                 Text(
-                    text = projeto.titulo,
+                    text = projeto.titulo ?: "",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E3A8A)
@@ -251,7 +251,7 @@ fun ProjetoCard(projeto: Projeto) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = projeto.progressoTexto,
+                    text = projeto.progressoTexto ?: "",
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold

@@ -17,4 +17,6 @@ sealed class Screens(val route: String) {
     object EditarProjeto : Screens("editar_projeto")
     object Profile : Screens("profile")
     object EditarEstrategia : Screens("editar_estrategia")
+    object GestorIdeiasAprovadas : Screens("gestor_ideias_aprovadas")
+    object GestorCuradoria : Screens("gestor_curadoria")
 }

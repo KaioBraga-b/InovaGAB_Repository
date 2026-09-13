@@ -9,18 +9,18 @@ object Permissions {
      */
 
     fun canManageStrategies(role: String): Boolean {
-        // Apenas Líder cria estratégias
-        return role == UserProfile.LIDER.name
+        // Líder e Gestor gerenciam estratégias
+        return role == UserProfile.LIDER.name || role == UserProfile.GESTOR.name
     }
 
     fun canEditStrategy(role: String): Boolean {
-        // Apenas Líder edita estratégias
-        return role == UserProfile.LIDER.name
+        // Líder e Gestor editam estratégias
+        return role == UserProfile.LIDER.name || role == UserProfile.GESTOR.name
     }
 
     fun canDeleteStrategy(role: String): Boolean {
-        // Apenas Líder exclui estratégias
-        return role == UserProfile.LIDER.name
+        // Líder e Gestor excluem estratégias
+        return role == UserProfile.LIDER.name || role == UserProfile.GESTOR.name
     }
 
     fun canManageProjects(role: String): Boolean {
