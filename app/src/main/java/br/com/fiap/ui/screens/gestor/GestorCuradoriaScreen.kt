@@ -53,8 +53,12 @@ fun GestorCuradoriaScreen(
     val todasIdeias = inovacaoViewModel.ideias
     var selectedTab by remember { mutableStateOf(0) }
     
-    val ideiasPendentes = todasIdeias.filter { it.status == "Enviada" || it.status == "Em análise" }
-    val ideiasRecusadas = todasIdeias.filter { it.status == "Recusada" }
+    val ideiasPendentes = todasIdeias
+        .filter { it.status != "Aprovada" && it.status != "Recusada" }
+        .sortedByDescending { it.votos }
+    val ideiasRecusadas = todasIdeias
+        .filter { it.status == "Recusada" }
+        .sortedByDescending { it.votos }
     
     val ideias = if (selectedTab == 0) ideiasPendentes else ideiasRecusadas
 
@@ -163,41 +167,77 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                     color = Color(0xFF1E3A8A)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Surface(
-                    color = Color(ideia.prioridadeBg),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = ideia.prioridade ?: "",
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                        color = Color(ideia.prioridadeColor),
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ThumbUp,
+                                contentDescription = null,
+                                tint = Color(0xFF2563EB),
+                                modifier = Modifier.size(13.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                text = "${ideia.votos} voto(s)",
+                                fontSize = 11.sp,
+                                color = Color(0xFF2563EB),
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Surface(
+                        color = Color(ideia.prioridadeBg ?: 0xFFF3F4F6.toInt()),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = ideia.prioridade ?: "Média",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = Color(ideia.prioridadeColor ?: 0xFF6B7280.toInt()),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
                 }
             }
 
             Text(
-                text = "${ideia.autor} · ${ideia.area} · ${ideia.tempo}",
+                text = "${ideia.autor ?: "Colaborador"} • ${ideia.area ?: "Sem Área"} • ${ideia.tempo ?: "Recente"}",
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.padding(vertical = 4.dp)
             )
 
+            if (!ideia.estrategiaTitulo.isNullOrBlank()) {
+                Text(
+                    text = "Estratégia: ${ideia.estrategiaTitulo}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF2563EB),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+            }
+
             Text(
                 text = ideia.descricao ?: "",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.DarkGray,
+                style = MaterialTheme.typography.bodyMedium,
+                color = Color(0xFF334155),
                 modifier = Modifier.padding(vertical = 8.dp),
-                lineHeight = 18.sp
+                lineHeight = 20.sp
             )
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = "Impacto: ${ideia.impacto} · Obj: ${ideia.objetivo}",
+                    text = "Impacto: ${ideia.impacto ?: "Médio"} · Obj: ${ideia.objetivo ?: "Geral"}",
                     style = MaterialTheme.typography.bodySmall,
-                    fontSize = 10.sp,
-                    color = Color.Gray
+                    fontSize = 11.sp,
+                    color = Color(0xFF4B5563)
                 )
             }
 
@@ -268,6 +308,20 @@ fun GestorIdeiaCardItem(ideia: Ideia, inovacaoViewModel: InovacaoViewModel) {
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             maxLines = 1
+                        )
+                    }
+
+                    IconButton(
+                        onClick = { if (!ideia.id.isNullOrBlank()) inovacaoViewModel.votarIdeia(ideia.id) },
+                        modifier = Modifier
+                            .background(Color(0xFFEFF6FF), RoundedCornerShape(8.dp))
+                            .size(40.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ThumbUp,
+                            contentDescription = "Votar",
+                            tint = Color(0xFF2563EB),
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                     

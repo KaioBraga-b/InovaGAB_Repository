@@ -46,6 +46,10 @@ fun EditarEstrategiaScreen(
     
     var titulo by remember { mutableStateOf("") }
     var descricao by remember { mutableStateOf("") }
+    var categoria by remember { mutableStateOf("") }
+    var campanha by remember { mutableStateOf("") }
+    var dataVigencia by remember { mutableStateOf("") }
+    var orientacoes by remember { mutableStateOf("") }
     var progresso by remember { mutableDoubleStateOf(0.0) }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
     var initialized by remember { mutableStateOf(false) }
@@ -56,6 +60,10 @@ fun EditarEstrategiaScreen(
         if (!initialized && estrategia != null) {
             titulo = estrategia.titulo ?: ""
             descricao = estrategia.descricao ?: ""
+            categoria = estrategia.categoria ?: ""
+            campanha = estrategia.campanha ?: ""
+            dataVigencia = estrategia.dataVigencia ?: ""
+            orientacoes = estrategia.orientacoes ?: ""
             progresso = estrategia.progresso
             etapaSelecionada = when(estrategia.status) {
                 "Planejamento" -> 0
@@ -175,10 +183,14 @@ fun EditarEstrategiaScreen(
                             shape = RoundedCornerShape(12.dp),
                             enabled = isLider,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
                                 focusedBorderColor = BlueSecondary,
-                                unfocusedBorderColor = BorderGray
+                                unfocusedBorderColor = BorderGray,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
                             )
                         )
                         
@@ -193,10 +205,91 @@ fun EditarEstrategiaScreen(
                             minLines = 3,
                             enabled = isLider,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
                                 focusedBorderColor = BlueSecondary,
-                                unfocusedBorderColor = BorderGray
+                                unfocusedBorderColor = BorderGray,
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = categoria,
+                            onValueChange = { if(isLider) categoria = it },
+                            label = { Text("Categoria") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = isLider,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = campanha,
+                            onValueChange = { if(isLider) campanha = it },
+                            label = { Text("Campanha") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = isLider,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = dataVigencia,
+                            onValueChange = { if(isLider) dataVigencia = it },
+                            label = { Text("Data de Vigência") },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            enabled = isLider,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        OutlinedTextField(
+                            value = orientacoes,
+                            onValueChange = { if(isLider) orientacoes = it },
+                            label = { Text("Orientações / TO-DOs") },
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
+                            shape = RoundedCornerShape(12.dp),
+                            minLines = 3,
+                            enabled = isLider,
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                disabledTextColor = Color(0xFF1E293B),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                disabledContainerColor = Color.White
                             )
                         )
 
@@ -276,7 +369,17 @@ fun EditarEstrategiaScreen(
                             Button(
                                 onClick = { 
                                     if (titulo.isNotBlank()) {
-                                        inovacaoViewModel.atualizarEstrategia(estrategiaId, titulo, descricao, progresso, etapaSelecionada)
+                                        inovacaoViewModel.atualizarEstrategia(
+                                            id = estrategiaId, 
+                                            titulo = titulo, 
+                                            descricao = descricao, 
+                                            novoProgresso = progresso, 
+                                            novaEtapa = etapaSelecionada,
+                                            categoria = categoria,
+                                            campanha = campanha,
+                                            dataVigencia = dataVigencia,
+                                            orientacoes = orientacoes
+                                        )
                                         navController.popBackStack() 
                                     }
                                 },

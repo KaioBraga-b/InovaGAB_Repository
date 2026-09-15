@@ -162,14 +162,21 @@ fun EditarProjetoScreen(
                         value = areaSelecionada?.nome ?: area.ifBlank { "Selecione uma área" },
                         onValueChange = {},
                         readOnly = true,
+                        label = { Text("Área Responsável") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedArea) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BlueSecondary,
-                            unfocusedBorderColor = BorderGray
+                            focusedTextColor = if (areaSelecionada != null || area.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                            unfocusedTextColor = if (areaSelecionada != null || area.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                            focusedBorderColor = Color(0xFF2563EB),
+                            unfocusedBorderColor = Color(0xFFE5E7EB),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedLabelColor = Color(0xFF2563EB),
+                            unfocusedLabelColor = Color(0xFF64748B)
                         )
                     )
                     ExposedDropdownMenu(
@@ -178,7 +185,7 @@ fun EditarProjetoScreen(
                     ) {
                         inovacaoViewModel.areas.forEach { a ->
                             DropdownMenuItem(
-                                text = { Text(a.nome) },
+                                text = { Text(a.nome, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 onClick = {
                                     areaSelecionada = a
                                     expandedArea = false
@@ -228,19 +235,38 @@ fun EditarProjetoScreen(
 
                 Spacer(modifier = Modifier.height(12.dp))
 
+                val invDigits = investimento.filter { it.isDigit() }
+                val invReais = (invDigits.toLongOrNull() ?: 0L) / 100.0
+                val isInvestimentoInvalido = invReais > 1_000_000.00
+
                 OutlinedTextField(
                     value = investimento,
                     onValueChange = { investimento = it },
-                    label = { Text("Investimento (R$)") },
+                    label = { Text("Investimento") },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
+                    isError = isInvestimentoInvalido,
                     colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = Color.Black,
-                        unfocusedTextColor = Color.Black,
-                        focusedBorderColor = BlueSecondary,
-                        unfocusedBorderColor = BorderGray
+                        focusedTextColor = Color(0xFF1E293B),
+                        unfocusedTextColor = Color(0xFF1E293B),
+                        focusedBorderColor = if (isInvestimentoInvalido) Color.Red else Color(0xFF2563EB),
+                        unfocusedBorderColor = if (isInvestimentoInvalido) Color.Red else Color(0xFFE5E7EB),
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedLabelColor = Color(0xFF2563EB),
+                        unfocusedLabelColor = Color(0xFF64748B)
                     )
                 )
+
+                if (isInvestimentoInvalido) {
+                    Text(
+                        text = "O investimento único não pode ultrapassar R$ 1.000.000,00",
+                        color = Color(0xFFEF4444),
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium,
+                        modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(12.dp))
 
@@ -257,14 +283,21 @@ fun EditarProjetoScreen(
                         value = selectedEstrategia?.titulo ?: "Selecione uma estratégia",
                         onValueChange = {},
                         readOnly = true,
+                        label = { Text("Estratégia Vinculada") },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstrategia) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .menuAnchor(),
                         shape = RoundedCornerShape(12.dp),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = BlueSecondary,
-                            unfocusedBorderColor = BorderGray
+                            focusedTextColor = if (selectedEstrategia != null) Color(0xFF1E293B) else Color.Gray,
+                            unfocusedTextColor = if (selectedEstrategia != null) Color(0xFF1E293B) else Color.Gray,
+                            focusedBorderColor = Color(0xFF2563EB),
+                            unfocusedBorderColor = Color(0xFFE5E7EB),
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedLabelColor = Color(0xFF2563EB),
+                            unfocusedLabelColor = Color(0xFF64748B)
                         )
                     )
                     ExposedDropdownMenu(
@@ -272,7 +305,7 @@ fun EditarProjetoScreen(
                         onDismissRequest = { expandedEstrategia = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Nenhuma (Opcional)") },
+                            text = { Text("Nenhuma (Opcional)", color = Color.Gray) },
                             onClick = {
                                 selectedEstrategia = null
                                 expandedEstrategia = false
@@ -280,7 +313,7 @@ fun EditarProjetoScreen(
                         )
                         inovacaoViewModel.estrategias.forEach { est ->
                             DropdownMenuItem(
-                                text = { Text(est.titulo ?: "") },
+                                text = { Text(est.titulo ?: "", color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                 onClick = {
                                     selectedEstrategia = est
                                     expandedEstrategia = false
@@ -399,7 +432,7 @@ fun EditarProjetoScreen(
 
                 Button(
                     onClick = {
-                        if (titulo.isNotBlank()) {
+                        if (titulo.isNotBlank() && !isInvestimentoInvalido) {
                             inovacaoViewModel.atualizarProjeto(
                                 id = projetoId,
                                 titulo = titulo,
@@ -415,6 +448,7 @@ fun EditarProjetoScreen(
                             navController.popBackStack()
                         }
                     },
+                    enabled = titulo.isNotBlank() && !isInvestimentoInvalido,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

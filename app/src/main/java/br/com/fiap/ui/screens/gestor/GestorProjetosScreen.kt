@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -23,62 +24,25 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.GestorBottomBar
+import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
-
-data class Projeto(
-    val titulo: String,
-    val status: String,
-    val statusColor: Color,
-    val statusBg: Color,
-    val area: String,
-    val periodo: String,
-    val progresso: Float,
-    val progressoTexto: String,
-    val etapaAtiva: Int,
-    val roiMensal: String? = null,
-    val investimento: String? = null,
-    val retorno: String? = null,
-    val roiPercent: String? = null,
-    val estMensal: String? = null
-)
+import androidx.lifecycle.viewmodel.compose.viewModel
+import br.com.fiap.viewmodel.InovacaoViewModel
+import br.com.fiap.viewmodel.Projeto
 
 @Composable
-fun GestorProjetosScreen(navController: NavController) {
-    val projetos = listOf(
-        Projeto(
-            titulo = "Rota Inteligente GAB",
-            status = "Em andamento",
-            statusColor = Color(0xFF16A34A),
-            statusBg = Color(0xFFDCFCE7),
-            area = "Logística",
-            periodo = "Jan 2025 → Jun 2025",
-            progresso = 0.65f,
-            progressoTexto = "65% concluído",
-            etapaAtiva = 2,
-            roiMensal = "ROI: R$ 12k/mês",
-            investimento = "R$ 45k",
-            retorno = "R$ 144k/a",
-            roiPercent = "220%"
-        ),
-        Projeto(
-            titulo = "App Vistoria Digital",
-            status = "Planejamento",
-            statusColor = Color(0xFFD97706),
-            statusBg = Color(0xFFFEF3C7),
-            area = "Passageiros",
-            periodo = "Mar 2025 → Ago 2025",
-            progresso = 0.25f,
-            progressoTexto = "25% concluído",
-            etapaAtiva = 1,
-            estMensal = "Est: R$ 8k/mês"
-        )
-    )
+fun GestorProjetosScreen(
+    navController: NavController,
+    inovacaoViewModel: InovacaoViewModel = viewModel()
+) {
+    val projetos = inovacaoViewModel.projetos
+
 
     Scaffold(
         bottomBar = { GestorBottomBar(navController) },
         floatingActionButton = {
             FloatingActionButton(
-                onClick = { /* Criar projeto */ },
+                onClick = { navController.navigate(Screens.CriarProjeto.route) },
                 containerColor = Color(0xFF2563EB),
                 contentColor = Color.White,
                 shape = CircleShape
@@ -115,6 +79,13 @@ fun GestorProjetosScreen(navController: NavController) {
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(onClick = { navController.navigate(Screens.InvestimentoProjeto.route) }) {
+                        Icon(
+                            imageVector = Icons.Default.AttachMoney,
+                            contentDescription = "Registrar Investimento",
+                            tint = Color(0xFF16A34A)
+                        )
+                    }
                     Surface(
                         color = Color(0xFFEFF6FF),
                         shape = RoundedCornerShape(12.dp)
@@ -140,7 +111,7 @@ fun GestorProjetosScreen(navController: NavController) {
             }
 
             Text(
-                text = "Projetos em andamento · 4 ativos",
+                text = "Projetos em andamento · ${projetos.size} ativos",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
@@ -148,14 +119,29 @@ fun GestorProjetosScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(projetos) { projeto ->
-                    ProjetoCard(projeto)
+            if (projetos.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Nenhum projeto cadastrado no momento.",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(projetos) { projeto ->
+                        ProjetoCard(projeto)
+                    }
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
             }
         }
     }
@@ -163,6 +149,7 @@ fun GestorProjetosScreen(navController: NavController) {
 
 @Composable
 fun ProjetoCard(projeto: Projeto) {
+    val formattedInvestimento = br.com.fiap.ui.screens.formatCurrencyDisplay(projeto.investimento)
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
@@ -182,13 +169,13 @@ fun ProjetoCard(projeto: Projeto) {
                     color = Color(0xFF1E3A8A)
                 )
                 Surface(
-                    color = projeto.statusBg,
+                    color = Color(projeto.statusBg),
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Text(
-                        text = projeto.status,
+                        text = projeto.status ?: "",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        color = projeto.statusColor,
+                        color = Color(projeto.statusColor),
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -196,11 +183,31 @@ fun ProjetoCard(projeto: Projeto) {
             }
 
             Text(
-                text = "${projeto.area} · ${projeto.periodo}",
+                text = "Área: ${projeto.area ?: "Não definida"} · ${projeto.periodo ?: ""}" +
+                       (if (formattedInvestimento.isNotBlank()) " · $formattedInvestimento" else ""),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 modifier = Modifier.padding(top = 4.dp)
             )
+
+            if (!projeto.estrategiaTitulo.isNullOrBlank()) {
+                Text(
+                    text = "Estratégia: ${projeto.estrategiaTitulo}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color(0xFF2563EB),
+                    fontWeight = FontWeight.Medium,
+                    modifier = Modifier.padding(top = 2.dp)
+                )
+            }
+
+            if (!projeto.descricao.isNullOrBlank()) {
+                Text(
+                    text = projeto.descricao,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color(0xFF334155),
+                    modifier = Modifier.padding(top = 6.dp)
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -234,7 +241,7 @@ fun ProjetoCard(projeto: Projeto) {
 
             // Barra de Progresso
             LinearProgressIndicator(
-                progress = { projeto.progresso },
+                progress = { projeto.progresso.toFloat() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp),
@@ -256,9 +263,9 @@ fun ProjetoCard(projeto: Projeto) {
                     color = Color.Gray,
                     fontWeight = FontWeight.Bold
                 )
-                projeto.roiMensal?.let {
+                projeto.roi?.let {
                     Text(
-                        text = it,
+                        text = "ROI: $it%",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFF16A34A),
                         fontWeight = FontWeight.Bold
@@ -273,15 +280,61 @@ fun ProjetoCard(projeto: Projeto) {
                 }
             }
 
-            if (projeto.investimento != null) {
+            if (projeto.tarefas.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = Color(0xFFF3F4F6))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Checklist do Projeto:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                projeto.tarefas.forEach { tarefa ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(if (tarefa.concluido) Color(0xFF16A34A) else Color(0xFFE5E7EB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (tarefa.concluido) {
+                                androidx.compose.material3.Icon(
+                                    imageVector = androidx.compose.material.icons.Icons.Default.Add,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = tarefa.titulo,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (tarefa.concluido) Color.Gray else Color.Black,
+                            textDecoration = if (tarefa.concluido) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None
+                        )
+                    }
+                }
+            }
+
+            if (projeto.investimento != null || projeto.valorMensal != null) {
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    FinCard(label = "Invest.", value = projeto.investimento, modifier = Modifier.weight(1f))
-                    FinCard(label = "Retorno", value = projeto.retorno!!, valueColor = Color(0xFF16A34A), modifier = Modifier.weight(1.2f))
-                    FinCard(label = "ROI", value = projeto.roiPercent!!, valueColor = Color(0xFF2563EB), modifier = Modifier.weight(1f))
+                    val invStr = if (projeto.valorMensal != null) "R$ ${String.format("%,.0f", projeto.valorMensal)}" else projeto.investimento ?: ""
+                    val retStr = if (projeto.resultadosAlcancados != null) projeto.resultadosAlcancados else "N/A"
+                    val roiStr = if (projeto.roi != null) "${String.format("%,.1f", projeto.roi)}%" else "N/A"
+                    
+                    FinCard(label = "Invest.", value = invStr, modifier = Modifier.weight(1f))
+                    FinCard(label = "Retorno", value = retStr, valueColor = Color(0xFF16A34A), modifier = Modifier.weight(1.2f))
+                    FinCard(label = "ROI", value = roiStr, valueColor = Color(0xFF2563EB), modifier = Modifier.weight(1f))
                 }
             }
         }

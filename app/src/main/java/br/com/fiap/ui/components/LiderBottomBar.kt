@@ -4,6 +4,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdsClick
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -75,6 +76,24 @@ fun LiderBottomBar(navController: NavController) {
             colors = NavigationBarItemDefaults.colors(
                 selectedIconColor = Color(0xFF2563EB),
                 selectedTextColor = Color(0xFF2563EB)
+            )
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Notifications, contentDescription = null) },
+            label = { Text("Avisos") },
+            selected = currentRoute == Screens.Notificacoes.route,
+            onClick = {
+                navController.navigate(Screens.Notificacoes.route) {
+                    popUpTo(navController.graph.findStartDestination().id) {
+                        saveState = true
+                    }
+                    launchSingleTop = true
+                    restoreState = true
+                }
+            },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = Color(0xFFF59E0B),
+                selectedTextColor = Color(0xFFF59E0B)
             )
         )
     }

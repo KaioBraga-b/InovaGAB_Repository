@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Flag
@@ -53,6 +54,8 @@ fun CriarEstrategiaScreen(
     var novaEstrategiaDescricao by remember { mutableStateOf("") }
     var novaEstrategiaCategoria by remember { mutableStateOf("") }
     var novaEstrategiaCampanha by remember { mutableStateOf("") }
+    var novaEstrategiaData by remember { mutableStateOf("") }
+    var novaEstrategiaOrientacoes by remember { mutableStateOf("") }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
     
     var isVisible by remember { mutableStateOf(false) }
@@ -177,36 +180,152 @@ fun CriarEstrategiaScreen(
 
                         Spacer(modifier = Modifier.height(8.dp))
                         
-                        OutlinedTextField(
-                            value = novaEstrategiaCategoria,
-                            onValueChange = { novaEstrategiaCategoria = it },
-                            placeholder = { Text("Categoria (ex: Receita, Custo)") },
-                            modifier = Modifier.fillMaxWidth(),
-                            shape = RoundedCornerShape(12.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                focusedBorderColor = Color(0xFF2563EB),
-                                unfocusedBorderColor = Color(0xFFE5E7EB)
-                            ),
-                            singleLine = true
-                        )
+                        var expandedCategoria by remember { mutableStateOf(false) }
+                        val categorias = listOf("Receita", "Custo", "Produtividade", "Qualidade", "Satisfação")
+                        
+                        ExposedDropdownMenuBox(
+                            expanded = expandedCategoria,
+                            onExpandedChange = { expandedCategoria = !expandedCategoria }
+                        ) {
+                            OutlinedTextField(
+                                value = novaEstrategiaCategoria.ifBlank { "Selecione uma Categoria" },
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Categoria") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCategoria) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = if (novaEstrategiaCategoria.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                    unfocusedTextColor = if (novaEstrategiaCategoria.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFE5E7EB),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = Color(0xFF2563EB),
+                                    unfocusedLabelColor = Color(0xFF64748B)
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedCategoria,
+                                onDismissRequest = { expandedCategoria = false }
+                            ) {
+                                categorias.forEach { cat ->
+                                    DropdownMenuItem(
+                                        text = { Text(cat, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
+                                        onClick = {
+                                            novaEstrategiaCategoria = cat
+                                            expandedCategoria = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
 
                         Spacer(modifier = Modifier.height(8.dp))
                         
+                        var expandedCampanha by remember { mutableStateOf(false) }
+                        val campanhas = listOf("2025Q1", "2025Q2", "2025Q3", "2025Q4", "Inovação Anual")
+
+                        ExposedDropdownMenuBox(
+                            expanded = expandedCampanha,
+                            onExpandedChange = { expandedCampanha = !expandedCampanha }
+                        ) {
+                            OutlinedTextField(
+                                value = novaEstrategiaCampanha.ifBlank { "Selecione uma Campanha" },
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Campanha") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedCampanha) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = if (novaEstrategiaCampanha.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                    unfocusedTextColor = if (novaEstrategiaCampanha.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                    focusedBorderColor = Color(0xFF2563EB),
+                                    unfocusedBorderColor = Color(0xFFE5E7EB),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = Color(0xFF2563EB),
+                                    unfocusedLabelColor = Color(0xFF64748B)
+                                )
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expandedCampanha,
+                                onDismissRequest = { expandedCampanha = false }
+                            ) {
+                                campanhas.forEach { camp ->
+                                    DropdownMenuItem(
+                                        text = { Text(camp, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
+                                        onClick = {
+                                            novaEstrategiaCampanha = camp
+                                            expandedCampanha = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        var showDatePicker by remember { mutableStateOf(false) }
+                        val datePickerState = rememberDatePickerState()
+
+                        if (showDatePicker) {
+                            DatePickerDialog(
+                                onDismissRequest = { showDatePicker = false },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        val dataMills = datePickerState.selectedDateMillis
+                                        if (dataMills != null) {
+                                            val formatter = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
+                                            novaEstrategiaData = formatter.format(java.util.Date(dataMills))
+                                        }
+                                        showDatePicker = false
+                                    }) {
+                                        Text("OK")
+                                    }
+                                },
+                                dismissButton = {
+                                    TextButton(onClick = { showDatePicker = false }) {
+                                        Text("Cancelar")
+                                    }
+                                }
+                            ) {
+                                DatePicker(state = datePickerState)
+                            }
+                        }
+
                         OutlinedTextField(
-                            value = novaEstrategiaCampanha,
-                            onValueChange = { novaEstrategiaCampanha = it },
-                            placeholder = { Text("Campanha (ex: 2025Q1)") },
-                            modifier = Modifier.fillMaxWidth(),
+                            value = novaEstrategiaData.ifBlank { "Selecione a data de vigência" },
+                            onValueChange = {},
+                            readOnly = true,
+                            enabled = false,
+                            label = { Text("Data de Vigência") },
+                            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                            shape = RoundedCornerShape(12.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                disabledTextColor = if (novaEstrategiaData.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                disabledBorderColor = Color(0xFFE5E7EB),
+                                disabledContainerColor = Color.White,
+                                disabledLabelColor = Color(0xFF64748B)
+                            )
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        OutlinedTextField(
+                            value = novaEstrategiaOrientacoes,
+                            onValueChange = { novaEstrategiaOrientacoes = it },
+                            placeholder = { Text("Orientações / TO-DOs") },
+                            modifier = Modifier.fillMaxWidth().height(100.dp),
                             shape = RoundedCornerShape(12.dp),
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedTextColor = Color.Black,
                                 unfocusedTextColor = Color.Black,
                                 focusedBorderColor = Color(0xFF2563EB),
                                 unfocusedBorderColor = Color(0xFFE5E7EB)
-                            ),
-                            singleLine = true
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(16.dp))
@@ -276,7 +395,9 @@ fun CriarEstrategiaScreen(
                                             },
                                             dataCriacao = "Criada agora",
                                             categoria = novaEstrategiaCategoria,
-                                            campanha = novaEstrategiaCampanha
+                                            campanha = novaEstrategiaCampanha,
+                                            dataVigencia = novaEstrategiaData,
+                                            orientacoes = novaEstrategiaOrientacoes
                                         )
                                     ) { success ->
                                         isLoading = false
@@ -442,6 +563,29 @@ fun EstrategiaCard(estrategia: Estrategia, navController: NavController? = null,
                                 fontSize = 10.sp
                             )
                         }
+                    }
+                }
+            }
+
+            if (!estrategia.orientacoes.isNullOrBlank()) {
+                Surface(
+                    color = Color(0xFFFFFBEB),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp)
+                ) {
+                    Column(modifier = Modifier.padding(12.dp)) {
+                        Text(
+                            text = "Orientações/TO-DOs:",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFD97706)
+                        )
+                        Text(
+                            text = estrategia.orientacoes,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.DarkGray,
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
                     }
                 }
             }

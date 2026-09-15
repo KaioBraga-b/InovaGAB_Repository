@@ -103,10 +103,15 @@ fun NovaIdeiaScreen(
                                     value = estrategiaSelecionada?.titulo ?: "Vincular a uma Estratégia (Opcional)",
                                     onValueChange = {},
                                     readOnly = true,
+                                    label = { Text("Estratégia Vinculada") },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstrategia) },
                                     modifier = Modifier.fillMaxWidth().menuAnchor(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = if (estrategiaSelecionada != null) Color(0xFF1E293B) else Color.Gray,
+                                        unfocusedTextColor = if (estrategiaSelecionada != null) Color(0xFF1E293B) else Color.Gray,
+                                        focusedBorderColor = Color(0xFF2563EB),
+                                        unfocusedBorderColor = Color(0xFFE5E7EB),
                                         focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White
                                     )
@@ -115,9 +120,16 @@ fun NovaIdeiaScreen(
                                     expanded = expandedEstrategia,
                                     onDismissRequest = { expandedEstrategia = false }
                                 ) {
+                                    DropdownMenuItem(
+                                        text = { Text("✕ Nenhuma estratégia (Avulsa)", color = Color.Gray) },
+                                        onClick = {
+                                            estrategiaSelecionada = null
+                                            expandedEstrategia = false
+                                        }
+                                    )
                                     inovacaoViewModel.estrategias.forEach { est ->
                                         DropdownMenuItem(
-                                            text = { Text(est.titulo ?: "") },
+                                            text = { Text(est.titulo ?: "", color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                             onClick = {
                                                 estrategiaSelecionada = est
                                                 expandedEstrategia = false
@@ -136,8 +148,8 @@ fun NovaIdeiaScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = Color.Black,
-                                    unfocusedTextColor = Color.Black,
+                                    focusedTextColor = Color(0xFF1E293B),
+                                    unfocusedTextColor = Color(0xFF1E293B),
                                     focusedBorderColor = BlueSecondary,
                                     unfocusedBorderColor = BorderGray,
                                     focusedContainerColor = Color.White,
@@ -152,11 +164,6 @@ fun NovaIdeiaScreen(
                             var showNewAreaDialog by remember { mutableStateOf(false) }
                             var novaAreaNome by remember { mutableStateOf("") }
 
-                            Text(
-                                text = "Área de Aplicação",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.Gray
-                            )
                             ExposedDropdownMenuBox(
                                 expanded = expandedArea,
                                 onExpandedChange = { expandedArea = !expandedArea }
@@ -165,12 +172,17 @@ fun NovaIdeiaScreen(
                                     value = areaSelecionada?.nome ?: area.takeIf { it.isNotBlank() } ?: "Selecione uma área",
                                     onValueChange = {},
                                     readOnly = true,
+                                    label = { Text("Área de Aplicação") },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedArea) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .menuAnchor(),
                                     shape = RoundedCornerShape(12.dp),
-                                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = if (areaSelecionada != null || area.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                        unfocusedTextColor = if (areaSelecionada != null || area.isNotBlank()) Color(0xFF1E293B) else Color.Gray,
+                                        focusedBorderColor = Color(0xFF2563EB),
+                                        unfocusedBorderColor = Color(0xFFE5E7EB),
                                         focusedContainerColor = Color.White,
                                         unfocusedContainerColor = Color.White
                                     )
@@ -181,7 +193,7 @@ fun NovaIdeiaScreen(
                                 ) {
                                     inovacaoViewModel.areas.forEach { a ->
                                         DropdownMenuItem(
-                                            text = { Text(a.nome) },
+                                            text = { Text(a.nome, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                             onClick = {
                                                 areaSelecionada = a
                                                 area = a.nome

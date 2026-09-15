@@ -83,18 +83,23 @@ fun OperadorHomeScreen(
                 )
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box {
-                        Icon(
-                            imageVector = Icons.Default.Notifications,
-                            contentDescription = null,
-                            tint = Color.LightGray
-                        )
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .background(Color.Red, CircleShape)
-                                .align(Alignment.TopEnd)
-                        )
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Notificacoes.route) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Avisos e Notificações",
+                                tint = Color(0xFF1E3A8A)
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .size(8.dp)
+                                    .background(Color.Red, CircleShape)
+                                    .align(Alignment.TopEnd)
+                            )
+                        }
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     IconButton(

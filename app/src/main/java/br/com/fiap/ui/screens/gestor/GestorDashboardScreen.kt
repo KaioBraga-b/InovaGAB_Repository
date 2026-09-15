@@ -154,7 +154,7 @@ fun GestorDashboardScreen(
                         )
                         DashboardMetricCard(
                             title = "Produtividade",
-                            value = "+%",
+                            value = "+${dashboardData.aumentoMedioProdutividade}%",
                             subtitle = "Aumento médio",
                             color = Color(0xFFD97706),
                             modifier = Modifier.weight(1f)
@@ -182,17 +182,72 @@ fun GestorDashboardScreen(
                     } else {
                         dashboardData.retornosPorEstrategia.forEach { ret ->
                             Card(
-                                modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp),
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(containerColor = Color.White),
                                 elevation = CardDefaults.cardElevation(2.dp)
                             ) {
                                 Column(modifier = Modifier.padding(16.dp)) {
-                                    Text(ret.estrategiaTitulo, fontWeight = FontWeight.Bold, color = Color(0xFF1E3A8A))
-                                    Text("${ret.totalProjetos} projetos vinculados", fontSize = 12.sp, color = Color.Gray)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = ret.estrategiaTitulo,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFF1E3A8A),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                        Surface(
+                                            color = if (ret.roi > 0.0) Color(0xFFDCFCE7) else Color(0xFFF3F4F6),
+                                            shape = RoundedCornerShape(8.dp)
+                                        ) {
+                                            Text(
+                                                text = if (ret.roi > 0.0) "+${String.format(java.util.Locale("pt", "BR"), "%.1f", ret.roi)}% ROI"
+                                                       else if (ret.totalProjetos == 0) "Sem projetos"
+                                                       else "0,0% ROI",
+                                                color = if (ret.roi > 0.0) Color(0xFF16A34A) else Color.Gray,
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 12.sp,
+                                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                            )
+                                        }
+                                    }
+                                    Text(
+                                        text = "${ret.totalProjetos} ${if (ret.totalProjetos == 1) "projeto vinculado" else "projetos vinculados"}",
+                                        fontSize = 12.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    HorizontalDivider(color = Color(0xFFF1F5F9))
                                     Spacer(modifier = Modifier.height(8.dp))
-                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                        Text("ROI: ${String.format("%.1f", ret.roi)}%", color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
-                                        Text("Lucro: R$ ${String.format("%,.2f", ret.retornoTotal)}", color = Color.DarkGray, fontSize = 14.sp)
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text("Investimento", color = Color.Gray, fontSize = 11.sp)
+                                            Text(
+                                                text = "R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", ret.investimentoTotal)}",
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color(0xFF1E293B),
+                                                fontSize = 13.sp
+                                            )
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text("Lucro / Retorno", color = Color.Gray, fontSize = 11.sp)
+                                            Text(
+                                                text = "R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", ret.retornoTotal)}",
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = Color(0xFF16A34A),
+                                                fontSize = 13.sp
+                                            )
+                                        }
                                     }
                                 }
                             }
@@ -219,6 +274,30 @@ fun GestorDashboardScreen(
                             }
                             IconButton(onClick = { navController.navigate(Screens.GestorCuradoria.route) }) {
                                 Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color(0xFF2563EB))
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Registrar Investimento Link
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFF2563EB)),
+                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(16.dp).fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("💰 Registrar Investimento", fontWeight = FontWeight.Bold, color = Color.White)
+                                Text("Adicionar lucro, ROI e investimento por projeto", color = Color.White.copy(alpha = 0.8f), fontSize = 12.sp)
+                            }
+                            IconButton(onClick = { navController.navigate(Screens.InvestimentoProjeto.route) }) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = Color.White)
                             }
                         }
                     }

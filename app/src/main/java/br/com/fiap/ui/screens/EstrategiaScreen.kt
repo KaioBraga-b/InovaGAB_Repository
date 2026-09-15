@@ -187,14 +187,29 @@ fun EstrategiaScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(estrategias) { estrategia ->
-                    EstrategiaCard(estrategia, navController, userRole = userRole)
+            if (estrategias.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Nenhuma estratégia cadastrada no momento.",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
-                item { Spacer(modifier = Modifier.height(20.dp)) }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(estrategias) { estrategia ->
+                        EstrategiaCard(estrategia, navController, userRole = userRole)
+                    }
+                    item { Spacer(modifier = Modifier.height(20.dp)) }
+                }
             }
         }
     }

@@ -13,6 +13,16 @@ data class Area(
     val nome: String
 )
 
+data class Notificacao(
+    val id: String? = null,
+    val mensagem: String,
+    val lida: Boolean = false,
+    val dataCriacao: String? = null,
+    val destinatarioRole: String,
+    val ideiaId: String? = null,
+    val tipo: String? = null
+)
+
 data class LoginRequest(
     val email: String,
     val password: String,
@@ -84,6 +94,12 @@ interface InovaGabApi {
     @DELETE("/api/inovacao/ideias/{id}")
     suspend fun deleteIdeia(@Path("id") id: String): Response<Unit>
 
+    @POST("/api/inovacao/ideias/{id}/votar")
+    suspend fun votarIdeia(@Path("id") id: String): Response<Ideia>
+
+    @POST("/api/inovacao/ideias/{id}/comentar")
+    suspend fun comentarIdeia(@Path("id") id: String, @Body comentario: br.com.fiap.viewmodel.Comentario): Response<Ideia>
+
     // Areas
     @GET("/api/inovacao/areas")
     suspend fun getAreas(): Response<List<Area>>
@@ -94,5 +110,12 @@ interface InovaGabApi {
     // Dashboard
     @GET("/api/inovacao/dashboard")
     suspend fun getDashboardResumo(): Response<br.com.fiap.viewmodel.DashboardResumoResponse>
+
+    // Notificacoes
+    @GET("/api/notificacoes/{role}")
+    suspend fun getNotificacoes(@Path("role") role: String): Response<List<Notificacao>>
+
+    @PUT("/api/notificacoes/{id}/lida")
+    suspend fun marcarNotificacaoLida(@Path("id") id: String): Response<Notificacao>
 }
 

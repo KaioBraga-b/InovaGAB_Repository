@@ -90,5 +90,11 @@ fun AppNavigation() {
         composable(Screens.Profile.route) {
             ProfileScreen(navController, authViewModel)
         }
+        composable(Screens.InvestimentoProjeto.route) {
+            br.com.fiap.ui.screens.gestor.InvestimentoProjetoScreen(navController, inovacaoViewModel)
+        }
+        composable(Screens.Notificacoes.route) {
+            br.com.fiap.ui.screens.NotificacoesScreen(navController, authViewModel, inovacaoViewModel)
+        }
     }
 }

@@ -1,11 +1,13 @@
 package br.com.fiap.ui.screens.gestor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -180,14 +182,21 @@ fun CriarProjetoScreen(
                                 value = areaSelecionada?.nome ?: "Selecione uma área",
                                 onValueChange = {},
                                 readOnly = true,
+                                label = { Text("Área Responsável") },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedArea) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .menuAnchor(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = if (areaSelecionada != null) Color(0xFF1E293B) else Color.Gray,
+                                    unfocusedTextColor = if (areaSelecionada != null) Color(0xFF1E293B) else Color.Gray,
                                     focusedBorderColor = Color(0xFF2563EB),
-                                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                                    unfocusedBorderColor = Color(0xFFE5E7EB),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = Color(0xFF2563EB),
+                                    unfocusedLabelColor = Color(0xFF64748B)
                                 )
                             )
                             ExposedDropdownMenu(
@@ -196,7 +205,7 @@ fun CriarProjetoScreen(
                             ) {
                                 inovacaoViewModel.areas.forEach { a ->
                                     DropdownMenuItem(
-                                        text = { Text(a.nome) },
+                                        text = { Text(a.nome, color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                         onClick = {
                                             areaSelecionada = a
                                             expandedArea = false
@@ -246,6 +255,9 @@ fun CriarProjetoScreen(
 
                         Spacer(modifier = Modifier.height(12.dp))
 
+                        val investimentoReais = (investimento.filter { it.isDigit() }.toLongOrNull() ?: 0L) / 100.0
+                        val isInvestimentoInvalido = investimentoReais > 1_000_000.00
+
                         Text(
                             text = "Investimento (R$)",
                             style = MaterialTheme.typography.labelMedium,
@@ -253,18 +265,110 @@ fun CriarProjetoScreen(
                         )
                         OutlinedTextField(
                             value = investimento,
-                            onValueChange = { investimento = it },
-                            placeholder = { Text("Ex: 50000") },
+                            onValueChange = { newValue ->
+                                // Aceita apenas dígitos
+                                investimento = newValue.filter { it.isDigit() }
+                            },
+                            label = { Text("Investimento") },
+                            placeholder = { Text("0,00") },
+                            prefix = { Text("R$ ", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold) },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
+                            isError = isInvestimentoInvalido,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = Color.Black,
-                                unfocusedTextColor = Color.Black,
-                                focusedBorderColor = Color(0xFF2563EB),
-                                unfocusedBorderColor = Color(0xFFE5E7EB)
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                focusedBorderColor = if (isInvestimentoInvalido) Color.Red else Color(0xFF2563EB),
+                                unfocusedBorderColor = if (isInvestimentoInvalido) Color.Red else Color(0xFFE5E7EB),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                focusedLabelColor = Color(0xFF2563EB),
+                                unfocusedLabelColor = Color(0xFF64748B)
                             ),
-                            singleLine = true
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                            visualTransformation = CurrencyVisualTransformation()
                         )
+
+                        if (isInvestimentoInvalido) {
+                            Text(
+                                text = "O investimento único não pode ultrapassar R$ 1.000.000,00",
+                                color = Color(0xFFEF4444),
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        var dataInicio by remember { mutableStateOf("") }
+                        var prazoFinal by remember { mutableStateOf("") }
+                        var showDataInicioPicker by remember { mutableStateOf(false) }
+                        var showPrazoPicker by remember { mutableStateOf(false) }
+                        val dataInicioPickerState = rememberDatePickerState()
+                        val prazoPickerState = rememberDatePickerState()
+
+                        if (showDataInicioPicker) {
+                            DatePickerDialog(
+                                onDismissRequest = { showDataInicioPicker = false },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        val mills = dataInicioPickerState.selectedDateMillis
+                                        if (mills != null) {
+                                            dataInicio = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(mills))
+                                        }
+                                        showDataInicioPicker = false
+                                    }) { Text("OK") }
+                                },
+                                dismissButton = { TextButton(onClick = { showDataInicioPicker = false }) { Text("Cancelar") } }
+                            ) { DatePicker(state = dataInicioPickerState) }
+                        }
+
+                        if (showPrazoPicker) {
+                            DatePickerDialog(
+                                onDismissRequest = { showPrazoPicker = false },
+                                confirmButton = {
+                                    TextButton(onClick = {
+                                        val mills = prazoPickerState.selectedDateMillis
+                                        if (mills != null) {
+                                            prazoFinal = java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault()).format(java.util.Date(mills))
+                                        }
+                                        showPrazoPicker = false
+                                    }) { Text("OK") }
+                                },
+                                dismissButton = { TextButton(onClick = { showPrazoPicker = false }) { Text("Cancelar") } }
+                            ) { DatePicker(state = prazoPickerState) }
+                        }
+
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedTextField(
+                                value = dataInicio.takeIf { it.isNotBlank() } ?: "Data Inicial",
+                                onValueChange = {},
+                                readOnly = true,
+                                enabled = false,
+                                modifier = Modifier.weight(1f).clickable { showDataInicioPicker = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    disabledTextColor = Color.Black,
+                                    disabledBorderColor = Color(0xFF2563EB),
+                                    disabledContainerColor = Color.White
+                                )
+                            )
+                            OutlinedTextField(
+                                value = prazoFinal.takeIf { it.isNotBlank() } ?: "Prazo Final",
+                                onValueChange = {},
+                                readOnly = true,
+                                enabled = false,
+                                modifier = Modifier.weight(1f).clickable { showPrazoPicker = true },
+                                shape = RoundedCornerShape(12.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    disabledTextColor = Color.Black,
+                                    disabledBorderColor = Color(0xFF2563EB),
+                                    disabledContainerColor = Color.White
+                                )
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -281,14 +385,21 @@ fun CriarProjetoScreen(
                                 value = selectedEstrategia?.titulo ?: "Selecione uma estratégia",
                                 onValueChange = {},
                                 readOnly = true,
+                                label = { Text("Estratégia Vinculada") },
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expandedEstrategia) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .menuAnchor(),
                                 shape = RoundedCornerShape(12.dp),
                                 colors = OutlinedTextFieldDefaults.colors(
+                                    focusedTextColor = if (selectedEstrategia != null) Color(0xFF1E293B) else Color.Gray,
+                                    unfocusedTextColor = if (selectedEstrategia != null) Color(0xFF1E293B) else Color.Gray,
                                     focusedBorderColor = Color(0xFF2563EB),
-                                    unfocusedBorderColor = Color(0xFFE5E7EB)
+                                    unfocusedBorderColor = Color(0xFFE5E7EB),
+                                    focusedContainerColor = Color.White,
+                                    unfocusedContainerColor = Color.White,
+                                    focusedLabelColor = Color(0xFF2563EB),
+                                    unfocusedLabelColor = Color(0xFF64748B)
                                 )
                             )
                             ExposedDropdownMenu(
@@ -296,7 +407,7 @@ fun CriarProjetoScreen(
                                 onDismissRequest = { expandedEstrategia = false }
                             ) {
                                 DropdownMenuItem(
-                                    text = { Text("Nenhuma (Opcional)") },
+                                    text = { Text("Nenhuma (Opcional)", color = Color.Gray) },
                                     onClick = {
                                         selectedEstrategia = null
                                         expandedEstrategia = false
@@ -304,7 +415,7 @@ fun CriarProjetoScreen(
                                 )
                                 inovacaoViewModel.estrategias.forEach { est ->
                                     DropdownMenuItem(
-                                        text = { Text(est.titulo ?: "") },
+                                        text = { Text(est.titulo ?: "", color = Color(0xFF1E293B), fontWeight = FontWeight.Medium) },
                                         onClick = {
                                             selectedEstrategia = est
                                             expandedEstrategia = false
@@ -353,8 +464,14 @@ fun CriarProjetoScreen(
                         
                         Button(
                             onClick = {
-                                if (titulo.isNotBlank()) {
+                                if (titulo.isNotBlank() && !isInvestimentoInvalido) {
                                     val etapaNome = etapas[etapaSelecionada]
+                                    val formattedInvestimento = if (investimento.isNotBlank()) {
+                                        val v = (investimento.filter { it.isDigit() }.toLongOrNull() ?: 0L) / 100.0
+                                        String.format(java.util.Locale("pt", "BR"), "R$ %,.2f", v)
+                                    } else "R$ 0,00"
+                                    val valorNum = (investimento.filter { it.isDigit() }.toLongOrNull() ?: 0L) / 100.0
+
                                     inovacaoViewModel.adicionarProjeto(Projeto(
                                         titulo = titulo,
                                         status = etapaNome,
@@ -389,13 +506,17 @@ fun CriarProjetoScreen(
                                             else -> "A iniciar"
                                         },
                                         etapaAtiva = etapaSelecionada,
-                                        investimento = investimento,
+                                        investimento = formattedInvestimento,
+                                        valorMensal = if (valorNum > 0) valorNum / 12.0 else null,
+                                        dataInicio = dataInicio,
+                                        prazo = prazoFinal,
                                         estrategiaId = selectedEstrategia?.id,
                                         estrategiaTitulo = selectedEstrategia?.titulo
                                     ))
                                     navController.popBackStack()
                                 }
                             },
+                            enabled = titulo.isNotBlank() && !isInvestimentoInvalido,
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(12.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB))
@@ -435,4 +556,30 @@ fun CriarProjetoScreen(
 @Composable
 fun CriarProjetoPreview() {
     CriarProjetoScreen(rememberNavController())
+}
+
+class CurrencyVisualTransformation : androidx.compose.ui.text.input.VisualTransformation {
+    override fun filter(text: androidx.compose.ui.text.AnnotatedString): androidx.compose.ui.text.input.TransformedText {
+        val originalText = text.text.filter { it.isDigit() }
+        if (originalText.isEmpty()) {
+            return androidx.compose.ui.text.input.TransformedText(
+                text,
+                androidx.compose.ui.text.input.OffsetMapping.Identity
+            )
+        }
+        val value = originalText.toLongOrNull() ?: 0L
+        val intPart = value / 100
+        val decPart = value % 100
+        
+        val intStr = String.format("%,d", intPart).replace(",", ".")
+        val formatted = "$intStr,${String.format("%02d", decPart)}"
+        
+        return androidx.compose.ui.text.input.TransformedText(
+            androidx.compose.ui.text.AnnotatedString(formatted),
+            object : androidx.compose.ui.text.input.OffsetMapping {
+                override fun originalToTransformed(offset: Int): Int = formatted.length
+                override fun transformedToOriginal(offset: Int): Int = originalText.length
+            }
+        )
+    }
 }

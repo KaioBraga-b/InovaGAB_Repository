@@ -156,21 +156,50 @@ fun ProjetosScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.fillMaxSize()
-            ) {
-                items(projetos) { projeto ->
-                    ProjetoCard(projeto, navController, canEdit = canManage)
+            if (projetos.isEmpty()) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 40.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Nenhum projeto cadastrado no momento.",
+                        color = Color.Gray,
+                        fontSize = 14.sp
+                    )
                 }
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    items(projetos) { projeto ->
+                        ProjetoCard(projeto, navController, canEdit = canManage)
+                    }
+                    item { Spacer(modifier = Modifier.height(80.dp)) }
+                }
             }
         }
     }
 }
 
+fun formatCurrencyDisplay(raw: String?): String {
+    if (raw.isNullOrBlank()) return ""
+    val cleaned = raw.trim()
+    if (cleaned.startsWith("R$")) return cleaned
+    val num = cleaned.replace("[^0-9,.]".toRegex(), "").replace(".", "").replace(",", ".").toDoubleOrNull()
+    return if (num != null) {
+        val format = java.text.NumberFormat.getCurrencyInstance(java.util.Locale("pt", "BR"))
+        format.format(num)
+    } else {
+        "R$ $cleaned"
+    }
+}
+
 @Composable
 fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit: Boolean = false) {
+    val formattedInvestimento = formatCurrencyDisplay(projeto.investimento)
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -194,7 +223,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                     )
                     Text(
                         text = "${projeto.area} · ${projeto.periodo}" +
-                               (if (!projeto.investimento.isNullOrBlank()) " · R$ ${projeto.investimento}" else ""),
+                               (if (formattedInvestimento.isNotBlank()) " · $formattedInvestimento" else ""),
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray,
                         modifier = Modifier.padding(top = 4.dp)
@@ -208,6 +237,51 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                             fontWeight = FontWeight.Medium,
                             modifier = Modifier.padding(top = 2.dp)
                         )
+                    }
+
+                    if (!projeto.descricao.isNullOrBlank()) {
+                        Text(
+                            text = projeto.descricao,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Color(0xFF334155),
+                            modifier = Modifier.padding(top = 6.dp)
+                        )
+                    }
+
+                    if ((projeto.roi != null && projeto.roi > 0.0) || (projeto.lucroObtido != null && projeto.lucroObtido > 0.0)) {
+                        Row(
+                            modifier = Modifier.padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            if (projeto.roi != null && projeto.roi > 0.0) {
+                                Surface(
+                                    color = Color(0xFFDCFCE7),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "ROI: +${String.format(java.util.Locale("pt", "BR"), "%.1f", projeto.roi)}%",
+                                        color = Color(0xFF15803D),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                            if (projeto.lucroObtido != null && projeto.lucroObtido > 0.0) {
+                                Surface(
+                                    color = Color(0xFFE0F2FE),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Lucro: R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", projeto.lucroObtido)}",
+                                        color = Color(0xFF0369A1),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
                 
@@ -316,6 +390,48 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                         style = MaterialTheme.typography.bodySmall,
                         color = Color.Gray
                     )
+                }
+            }
+            
+            if (projeto.tarefas.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Divider(color = Color(0xFFF3F4F6))
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Checklist do Projeto:",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Color.Gray,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+                projeto.tarefas.forEach { tarefa ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(16.dp)
+                                .background(if (tarefa.concluido) Color(0xFF16A34A) else Color(0xFFE5E7EB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (tarefa.concluido) {
+                                Icon(
+                                    imageVector = Icons.Default.Add, // ideally a check icon, using Add or similar standard icon if check is unavailable, but material icons usually have Check.
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(10.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = tarefa.titulo,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (tarefa.concluido) Color.Gray else Color.Black,
+                            textDecoration = if (tarefa.concluido) androidx.compose.ui.text.style.TextDecoration.LineThrough else androidx.compose.ui.text.style.TextDecoration.None
+                        )
+                    }
                 }
             }
         }

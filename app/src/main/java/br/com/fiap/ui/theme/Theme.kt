@@ -12,15 +12,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
-private val DarkColorScheme = darkColorScheme(
+private val DarkColorScheme = lightColorScheme(
     primary = BlueSecondary,
-    secondary = PurpleGrey80,
+    secondary = BluePrimary,
     tertiary = Pink80,
     background = BackgroundBlue,
-    surface = BackgroundBlue,
+    surface = Color.White,
     onPrimary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White
+    onBackground = Color(0xFF1E293B),
+    onSurface = Color(0xFF1E293B)
 )
 
 private val LightColorScheme = lightColorScheme(
@@ -30,8 +30,8 @@ private val LightColorScheme = lightColorScheme(
     background = BackgroundBlue,
     surface = Color.White,
     onPrimary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.Black
+    onBackground = Color(0xFF1E293B),
+    onSurface = Color(0xFF1E293B)
 )
 
 @Composable
@@ -41,15 +41,7 @@ fun InovaGABTheme(
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = LightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,
