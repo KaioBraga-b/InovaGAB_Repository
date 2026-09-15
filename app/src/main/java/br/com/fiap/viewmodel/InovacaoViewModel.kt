@@ -11,6 +11,7 @@ import androidx.lifecycle.viewModelScope
 import br.com.fiap.api.ApiClient
 import br.com.fiap.api.Area
 import br.com.fiap.api.Notificacao
+import br.com.fiap.api.TransacaoFinanceira
 import kotlinx.coroutines.launch
 import com.google.gson.annotations.SerializedName
 
@@ -146,13 +147,39 @@ class InovacaoViewModel : ViewModel() {
     var notificacoes by mutableStateOf<List<Notificacao>>(emptyList())
         private set
 
+    var transacoesFinanceiras by mutableStateOf<List<TransacaoFinanceira>>(emptyList())
+        private set
+
     init {
         fetchProjetos()
         fetchEstrategias()
         fetchIdeias()
         fetchAreas()
         fetchDashboardResumo()
+        fetchTransacoes()
         loadDefaultNotificacoes("TODOS")
+    }
+
+    fun parseInvestimento(proj: Projeto): Double {
+        if (proj.valorMensal != null && proj.valorMensal > 0.0) {
+            val meses = proj.duracao?.filter { it.isDigit() }?.toDoubleOrNull() ?: 1.0
+            return proj.valorMensal * meses
+        }
+        if (!proj.investimento.isNullOrBlank()) {
+            val clean = proj.investimento
+                .replace("R$", "")
+                .replace("/mês", "")
+                .replace("/mes", "")
+                .trim()
+            val numStr = clean.replace("[^0-9,.]".toRegex(), "")
+            return when {
+                numStr.contains(",") && numStr.contains(".") -> numStr.replace(".", "").replace(",", ".").toDoubleOrNull() ?: 0.0
+                numStr.contains(",") -> numStr.replace(",", ".").toDoubleOrNull() ?: 0.0
+                numStr.contains(".") -> numStr.toDoubleOrNull() ?: 0.0
+                else -> numStr.toDoubleOrNull() ?: 0.0
+            }
+        }
+        return 0.0
     }
 
     fun recalcularDashboardResumo() {
@@ -160,28 +187,6 @@ class InovacaoViewModel : ViewModel() {
         var somaLucro = 0.0
         var countAtivos = 0
         var countNoPrazo = 0
-
-        fun parseInvestimento(proj: Projeto): Double {
-            if (proj.valorMensal != null && proj.valorMensal > 0.0) {
-                val meses = proj.duracao?.filter { it.isDigit() }?.toDoubleOrNull() ?: 12.0
-                return proj.valorMensal * meses
-            }
-            if (!proj.investimento.isNullOrBlank()) {
-                val clean = proj.investimento.replace("R$", "").trim()
-                if (clean.contains(",") && clean.contains(".")) {
-                    val numStr = clean.replace(".", "").replace(",", ".")
-                    return numStr.toDoubleOrNull() ?: 0.0
-                } else if (clean.contains(",")) {
-                    val numStr = clean.replace(",", ".")
-                    return numStr.toDoubleOrNull() ?: 0.0
-                } else {
-                    val digits = clean.filter { it.isDigit() }
-                    val d = digits.toDoubleOrNull() ?: 0.0
-                    return if (digits.length > 5) d / 100.0 else d
-                }
-            }
-            return 0.0
-        }
 
         val mapaEstrategias = mutableMapOf<String, RetornoPorEstrategia>()
 
@@ -251,6 +256,15 @@ class InovacaoViewModel : ViewModel() {
 
             if (proj.status != "Concluído") countAtivos++
             if (proj.status != "Atrasado") countNoPrazo++
+        }
+
+        // 3. Somar transações avulsas (sem projeto vinculado) para refletir no saldo global
+        transacoesFinanceiras.filter { it.projetoId.isNullOrBlank() }.forEach { t ->
+            if (t.tipo.equals("DESPESA", ignoreCase = true)) {
+                somaInvestimento += t.valor
+            } else if (t.tipo.equals("RECEITA", ignoreCase = true)) {
+                somaLucro += t.valor
+            }
         }
 
         val roiGeral = when {
@@ -562,6 +576,17 @@ class InovacaoViewModel : ViewModel() {
             recalcularDashboardResumo()
             adicionarNotificacaoLocal("Investimento registrado no projeto \"${projeto.titulo}\": R$ ${String.format("%,.2f", valorMensal)}/mês (ROI: ${String.format("%.1f", roi)}%)")
         }
+
+        // Se houver lucro/receita informada, registrar no histórico de receitas
+        if (lucroObtido > 0.0) {
+            registrarReceita(
+                projetoId = id,
+                projetoTitulo = projeto.titulo ?: "Projeto",
+                descricao = if (resultadosAlcancados.isNotBlank()) resultadosAlcancados else "Receita / Lucro registrado",
+                valor = lucroObtido,
+                categoria = "Receita de Projeto"
+            )
+        }
         
         viewModelScope.launch {
             try {
@@ -571,6 +596,140 @@ class InovacaoViewModel : ViewModel() {
                 }
             } catch (e: Exception) {
                 Log.e("API", "Erro ao atualizar investimento", e)
+            }
+        }
+    }
+
+    // Gestão de Transações Financeiras (Receitas e Despesas)
+    fun fetchTransacoes(projetoId: String? = null, tipo: String? = null) {
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.apiService.getTransacoes(projetoId, tipo)
+                if (response.isSuccessful && response.body() != null) {
+                    transacoesFinanceiras = response.body()!!
+                    Log.d("API", "Transações carregadas da API: ${transacoesFinanceiras.size}")
+                }
+            } catch (e: Exception) {
+                Log.d("API", "Sem transações remotas: ${e.message}")
+            }
+        }
+    }
+
+    fun registrarTransacao(
+        projetoId: String,
+        projetoTitulo: String,
+        tipo: String, // "RECEITA" ou "DESPESA"
+        descricao: String,
+        valor: Double,
+        categoria: String = "Geral",
+        responsavel: String = "Gestor"
+    ) {
+        val dataFormatada = java.text.SimpleDateFormat("dd/MM/yyyy HH:mm", java.util.Locale.getDefault()).format(java.util.Date())
+        val nova = TransacaoFinanceira(
+            id = "trans-${System.currentTimeMillis()}",
+            projetoId = projetoId,
+            projetoTitulo = projetoTitulo,
+            tipo = tipo.uppercase(),
+            descricao = descricao,
+            valor = valor,
+            categoria = categoria,
+            dataHora = dataFormatada,
+            responsavel = responsavel
+        )
+
+        // Optimistic UI update no histórico
+        transacoesFinanceiras = listOf(nova) + transacoesFinanceiras
+
+        // Atualizar projeto localmente
+        val projeto = projetos.find { it.id == projetoId }
+        if (projeto != null) {
+            if (tipo.equals("RECEITA", ignoreCase = true)) {
+                val novoLucro = (projeto.lucroObtido ?: 0.0) + valor
+                val atualizado = projeto.copy(lucroObtido = novoLucro)
+                projetos = projetos.map { if (it.id == projetoId) atualizado else it }
+            } else if (tipo.equals("DESPESA", ignoreCase = true)) {
+                val invAtual = parseInvestimento(projeto)
+                val novoInv = invAtual + valor
+                val atualizado = projeto.copy(
+                    investimento = "R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", novoInv)}"
+                )
+                projetos = projetos.map { if (it.id == projetoId) atualizado else it }
+            }
+            recalcularDashboardResumo()
+            val tipoNome = if (tipo.equals("RECEITA", ignoreCase = true)) "Receita" else "Despesa"
+            adicionarNotificacaoLocal("$tipoNome de R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", valor)} registrada no projeto \"${projetoTitulo}\"")
+        }
+
+        // Chamar API
+        viewModelScope.launch {
+            try {
+                val response = if (tipo.equals("RECEITA", ignoreCase = true)) {
+                    ApiClient.apiService.addReceita(nova)
+                } else {
+                    ApiClient.apiService.addDespesa(nova)
+                }
+                if (response.isSuccessful) {
+                    fetchTransacoes()
+                    fetchProjetos()
+                }
+            } catch (e: Exception) {
+                Log.e("API", "Erro ao registrar transação na API", e)
+            }
+        }
+    }
+
+    fun registrarReceita(
+        projetoId: String,
+        projetoTitulo: String,
+        descricao: String,
+        valor: Double,
+        categoria: String = "Receita Obtida",
+        responsavel: String = "Gestor"
+    ) {
+        registrarTransacao(projetoId, projetoTitulo, "RECEITA", descricao, valor, categoria, responsavel)
+    }
+
+    fun registrarDespesa(
+        projetoId: String,
+        projetoTitulo: String,
+        descricao: String,
+        valor: Double,
+        categoria: String = "Despesa Operacional",
+        responsavel: String = "Gestor"
+    ) {
+        registrarTransacao(projetoId, projetoTitulo, "DESPESA", descricao, valor, categoria, responsavel)
+    }
+
+    fun excluirTransacao(id: String) {
+        val trans = transacoesFinanceiras.find { it.id == id }
+        transacoesFinanceiras = transacoesFinanceiras.filter { it.id != id }
+
+        // Reverter efeito no projeto se for receita ou despesa
+        if (trans != null && trans.projetoId != null) {
+            val projeto = projetos.find { it.id == trans.projetoId }
+            if (projeto != null) {
+                if (trans.tipo.equals("RECEITA", ignoreCase = true) && projeto.lucroObtido != null) {
+                    val novoLucro = maxOf(0.0, projeto.lucroObtido - trans.valor)
+                    projetos = projetos.map { if (it.id == trans.projetoId) it.copy(lucroObtido = novoLucro) else it }
+                } else if (trans.tipo.equals("DESPESA", ignoreCase = true)) {
+                    val invAtual = parseInvestimento(projeto)
+                    val novoInv = maxOf(0.0, invAtual - trans.valor)
+                    val atualizado = projeto.copy(
+                        investimento = "R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", novoInv)}"
+                    )
+                    projetos = projetos.map { if (it.id == trans.projetoId) atualizado else it }
+                }
+                recalcularDashboardResumo()
+            }
+        }
+
+        viewModelScope.launch {
+            try {
+                ApiClient.apiService.deleteTransacao(id)
+                fetchTransacoes()
+                fetchProjetos()
+            } catch (e: Exception) {
+                Log.e("API", "Erro ao excluir transação", e)
             }
         }
     }
@@ -805,11 +964,72 @@ class InovacaoViewModel : ViewModel() {
         }
     }
 
-    fun votarIdeia(id: String) {
+    var votosRealizados by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
+
+    val maxVotosPermitidos = 5
+
+    fun getVotosGastos(userId: String? = null): Int {
+        val uid = userId?.takeIf { it.isNotBlank() } ?: "currentUser"
+        return votosRealizados[uid] ?: 0
+    }
+
+    fun getVotosRestantes(userId: String? = null): Int {
+        val gastos = getVotosGastos(userId)
+        return maxOf(0, maxVotosPermitidos - gastos)
+    }
+
+    fun podeVotar(ideia: Ideia, userId: String? = null): Boolean {
+        val status = ideia.status?.trim()?.uppercase() ?: ""
+        val isFinalizada = status.contains("APROVAD") || status.contains("RECUSAD")
+        if (isFinalizada) return false
+        val gastos = getVotosGastos(userId)
+        return gastos < maxVotosPermitidos
+    }
+
+    fun carregarVotosLocais(context: android.content.Context, userId: String?) {
+        val uid = userId?.takeIf { it.isNotBlank() } ?: "currentUser"
+        val prefs = context.getSharedPreferences("inovagab_votos", android.content.Context.MODE_PRIVATE)
+        val gastos = prefs.getInt("votos_$uid", 0)
+        val mapa = votosRealizados.toMutableMap()
+        mapa[uid] = gastos
+        votosRealizados = mapa
+    }
+
+    fun persistirVotoLocal(context: android.content.Context, userId: String?) {
+        val uid = userId?.takeIf { it.isNotBlank() } ?: "currentUser"
+        val prefs = context.getSharedPreferences("inovagab_votos", android.content.Context.MODE_PRIVATE)
+        val atual = votosRealizados[uid] ?: 0
+        prefs.edit().putInt("votos_$uid", atual).apply()
+    }
+
+    fun votarIdeia(id: String, userId: String? = null, onFeedback: ((String) -> Unit)? = null) {
         if (id.isBlank()) return
-        
-        // Optimistic UI Update - mais votadas sempre em cima
         val ideia = ideias.find { it.id == id } ?: return
+
+        val status = ideia.status?.trim()?.uppercase() ?: ""
+        if (status.contains("APROVAD") || status.contains("RECUSAD")) {
+            val msg = "A ideia já está ${ideia.status} e não pode mais receber votos."
+            adicionarNotificacaoLocal(msg)
+            onFeedback?.invoke(msg)
+            return
+        }
+
+        val uid = userId?.takeIf { it.isNotBlank() } ?: "currentUser"
+        val votosAtuais = getVotosGastos(uid)
+        if (votosAtuais >= maxVotosPermitidos) {
+            val msg = "Você atingiu o limite de $maxVotosPermitidos votos individuais!"
+            adicionarNotificacaoLocal(msg)
+            onFeedback?.invoke(msg)
+            return
+        }
+
+        // Incrementa contagem de votos do usuário
+        val novoMapa = votosRealizados.toMutableMap()
+        novoMapa[uid] = votosAtuais + 1
+        votosRealizados = novoMapa
+
+        // Optimistic UI Update - mais votadas sempre em cima
         val atualizada = ideia.copy(votos = ideia.votos + 1)
         val tempIdeias = ideias.toMutableList()
         val index = tempIdeias.indexOfFirst { it.id == id }
@@ -818,7 +1038,10 @@ class InovacaoViewModel : ViewModel() {
             ideias = tempIdeias.sortedByDescending { it.votos }
         }
 
-        adicionarNotificacaoLocal("Você votou na ideia \"${ideia.titulo}\" (+1 voto)")
+        val restantes = maxVotosPermitidos - (votosAtuais + 1)
+        val sucessoMsg = "Voto registrado na ideia \"${ideia.titulo}\"! (Restam $restantes voto(s))"
+        adicionarNotificacaoLocal(sucessoMsg)
+        onFeedback?.invoke(sucessoMsg)
 
         viewModelScope.launch {
             try {

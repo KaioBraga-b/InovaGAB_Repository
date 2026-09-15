@@ -135,11 +135,11 @@ fun LiderHomeScreen(
                             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 Column {
                                     Text("Lucro Obtido", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                                    Text("R$ ${String.format("%,.2f", dashboardData.lucroObtidoTotal)}", color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    Text("R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", dashboardData.lucroObtidoTotal)}", color = Color.White, fontWeight = FontWeight.SemiBold)
                                 }
                                 Column {
                                     Text("Investimento", color = Color.White.copy(alpha = 0.7f), fontSize = 12.sp)
-                                    Text("R$ ${String.format("%,.2f", dashboardData.investimentoTotal)}", color = Color.White, fontWeight = FontWeight.SemiBold)
+                                    Text("R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", dashboardData.investimentoTotal)}", color = Color.White, fontWeight = FontWeight.SemiBold)
                                 }
                             }
                         }
@@ -237,7 +237,7 @@ fun LiderHomeScreen(
                                         Column {
                                             Text("Investimento", color = Color.Gray, fontSize = 11.sp)
                                             Text(
-                                                text = "R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", ret.investimentoTotal)}",
+                                                text = "R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", ret.investimentoTotal)}",
                                                 fontWeight = FontWeight.SemiBold,
                                                 color = Color(0xFF1E293B),
                                                 fontSize = 13.sp
@@ -246,9 +246,9 @@ fun LiderHomeScreen(
                                         Column(horizontalAlignment = Alignment.End) {
                                             Text("Lucro / Retorno", color = Color.Gray, fontSize = 11.sp)
                                             Text(
-                                                text = "R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", ret.retornoTotal)}",
+                                                text = "R$ ${String.format(java.util.Locale.forLanguageTag("pt-BR"), "%,.2f", ret.retornoTotal)}",
                                                 fontWeight = FontWeight.SemiBold,
-                                                color = Color(0xFF16A34A),
+                                                color = Color(0xFF10B981),
                                                 fontSize = 13.sp
                                             )
                                         }

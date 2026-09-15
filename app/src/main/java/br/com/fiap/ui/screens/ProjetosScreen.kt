@@ -188,9 +188,15 @@ fun formatCurrencyDisplay(raw: String?): String {
     if (raw.isNullOrBlank()) return ""
     val cleaned = raw.trim()
     if (cleaned.startsWith("R$")) return cleaned
-    val num = cleaned.replace("[^0-9,.]".toRegex(), "").replace(".", "").replace(",", ".").toDoubleOrNull()
+    val numStr = cleaned.replace("[^0-9,.]".toRegex(), "")
+    val num = when {
+        numStr.contains(",") && numStr.contains(".") -> numStr.replace(".", "").replace(",", ".").toDoubleOrNull()
+        numStr.contains(",") -> numStr.replace(",", ".").toDoubleOrNull()
+        numStr.contains(".") -> numStr.toDoubleOrNull()
+        else -> numStr.toDoubleOrNull()
+    }
     return if (num != null) {
-        val format = java.text.NumberFormat.getCurrencyInstance(java.util.Locale("pt", "BR"))
+        val format = java.text.NumberFormat.getCurrencyInstance(java.util.Locale.forLanguageTag("pt-BR"))
         format.format(num)
     } else {
         "R$ $cleaned"

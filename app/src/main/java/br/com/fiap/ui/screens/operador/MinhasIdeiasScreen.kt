@@ -9,6 +9,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Block
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,6 +32,7 @@ import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.AuthViewModel
 import br.com.fiap.viewmodel.Ideia
 import br.com.fiap.ui.navigation.Screens
+import kotlinx.coroutines.launch
 
 @Composable
 fun MinhasIdeiasScreen(
@@ -39,9 +42,13 @@ fun MinhasIdeiasScreen(
 ) {
     val userId = authViewModel.currentUserId ?: ""
     var selectedTab by remember { mutableIntStateOf(0) }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(userId) {
         inovacaoViewModel.fetchIdeias()
+        inovacaoViewModel.carregarVotosLocais(context, userId)
     }
 
     val todasIdeias = inovacaoViewModel.ideias
@@ -53,7 +60,11 @@ fun MinhasIdeiasScreen(
         .sortedByDescending { it.votos }
     val ideias = if (selectedTab == 0) ideiasParaVotacao else minhasIdeias
 
+    val votosGastos = inovacaoViewModel.getVotosGastos(userId)
+    val votosRestantes = inovacaoViewModel.getVotosRestantes(userId)
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = { DynamicBottomBar(navController, authViewModel) }
     ) { innerPadding ->
         Column(
@@ -104,7 +115,43 @@ fun MinhasIdeiasScreen(
                 modifier = Modifier.padding(top = 4.dp)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // Banner da Cota de 5 Votos por Usuário
+            Surface(
+                color = if (votosRestantes > 0) Color(0xFFEFF6FF) else Color(0xFFFEF2F2),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth(),
+                border = androidx.compose.foundation.BorderStroke(1.dp, if (votosRestantes > 0) Color(0xFFBFDBFE) else Color(0xFFFECACA))
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = if (votosRestantes > 0) Icons.Default.ThumbUp else Icons.Default.Block,
+                        contentDescription = null,
+                        tint = if (votosRestantes > 0) Color(0xFF2563EB) else Color(0xFFDC2626),
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "Seus Votos: $votosGastos/5 utilizados",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 13.sp,
+                            color = if (votosRestantes > 0) Color(0xFF1E3A8A) else Color(0xFF991B1B)
+                        )
+                        Text(
+                            text = if (votosRestantes > 0) "Você ainda pode votar em até $votosRestantes ideia(s)" else "Limite de 5 votos atingido",
+                            fontSize = 11.sp,
+                            color = if (votosRestantes > 0) Color(0xFF3B82F6) else Color(0xFFDC2626)
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(14.dp))
 
             // Tabs de Filtro
             Row(
@@ -147,8 +194,16 @@ fun MinhasIdeiasScreen(
                     modifier = Modifier.fillMaxSize()
                 ) {
                     items(ideias, key = { it.id ?: it.titulo ?: "" }) { ideia ->
+                        val status = ideia.status?.trim()?.uppercase() ?: ""
+                        val isFinalizada = status.contains("APROVAD") || status.contains("RECUSAD")
+                        val limiteAtingido = votosGastos >= inovacaoViewModel.maxVotosPermitidos
+                        val podeVotar = !isFinalizada && !limiteAtingido
+
                         IdeiaCard(
                             ideia = ideia,
+                            isFinalizada = isFinalizada,
+                            limiteAtingido = limiteAtingido,
+                            podeVotar = podeVotar,
                             onEditClick = {
                                 if (ideia.userId == userId) {
                                     navController.navigate("${Screens.EditarIdeia.route}/${ideia.id}")
@@ -156,7 +211,12 @@ fun MinhasIdeiasScreen(
                             },
                             onVoteClick = {
                                 if (!ideia.id.isNullOrBlank()) {
-                                    inovacaoViewModel.votarIdeia(ideia.id)
+                                    inovacaoViewModel.votarIdeia(ideia.id, userId) { msg ->
+                                        inovacaoViewModel.persistirVotoLocal(context, userId)
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(msg)
+                                        }
+                                    }
                                 }
                             }
                         )
@@ -171,6 +231,9 @@ fun MinhasIdeiasScreen(
 @Composable
 fun IdeiaCard(
     ideia: Ideia, 
+    isFinalizada: Boolean,
+    limiteAtingido: Boolean,
+    podeVotar: Boolean,
     onEditClick: () -> Unit,
     onVoteClick: () -> Unit
 ) {
@@ -274,7 +337,7 @@ fun IdeiaCard(
                             shape = RoundedCornerShape(8.dp)
                         ) {
                             Text(
-                                text = "Obj: ${ideia.objetivo}",
+                                text = "Objetivo: ${ideia.objetivo}",
                                 color = Color(0xFF4B5563),
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.SemiBold,
@@ -305,7 +368,7 @@ fun IdeiaCard(
                 )
             }
 
-            // Barra de Votação Interativa
+            // Barra de Votação Interativa com Bloqueio e Cota
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -338,19 +401,38 @@ fun IdeiaCard(
                 }
 
                 Button(
-                    onClick = { onVoteClick() },
+                    onClick = { if (podeVotar) onVoteClick() },
+                    enabled = podeVotar,
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF2563EB)),
-                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp)
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (podeVotar) Color(0xFF2563EB) else Color(0xFFE2E8F0),
+                        disabledContainerColor = Color(0xFFF1F5F9),
+                        contentColor = if (podeVotar) Color.White else Color(0xFF64748B),
+                        disabledContentColor = Color(0xFF94A3B8)
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ThumbUp,
+                        imageVector = when {
+                            isFinalizada -> Icons.Default.Lock
+                            limiteAtingido -> Icons.Default.Block
+                            else -> Icons.Default.ThumbUp
+                        },
                         contentDescription = "Votar",
                         modifier = Modifier.size(16.dp),
-                        tint = Color.White
+                        tint = if (podeVotar) Color.White else Color(0xFF94A3B8)
                     )
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Votar", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                    Text(
+                        text = when {
+                            isFinalizada -> "Encerrada (${ideia.status})"
+                            limiteAtingido -> "Limite (5/5)"
+                            else -> "Votar"
+                        },
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (podeVotar) Color.White else Color(0xFF64748B)
+                    )
                 }
             }
         }

@@ -13,6 +13,18 @@ data class Area(
     val nome: String
 )
 
+data class TransacaoFinanceira(
+    val id: String? = null,
+    val projetoId: String? = null,
+    val projetoTitulo: String? = null,
+    val tipo: String, // "RECEITA" ou "DESPESA"
+    val descricao: String,
+    val valor: Double,
+    val categoria: String? = null,
+    val dataHora: String? = null,
+    val responsavel: String? = null
+)
+
 data class Notificacao(
     val id: String? = null,
     val mensagem: String,
@@ -117,5 +129,30 @@ interface InovaGabApi {
 
     @PUT("/api/notificacoes/{id}/lida")
     suspend fun marcarNotificacaoLida(@Path("id") id: String): Response<Notificacao>
+
+    // Transacoes Financeiras (Receitas e Despesas)
+    @GET("/api/inovacao/transacoes")
+    suspend fun getTransacoes(
+        @Query("projetoId") projetoId: String? = null,
+        @Query("tipo") tipo: String? = null
+    ): Response<List<TransacaoFinanceira>>
+
+    @POST("/api/inovacao/transacoes")
+    suspend fun addTransacao(@Body transacao: TransacaoFinanceira): Response<TransacaoFinanceira>
+
+    @GET("/api/inovacao/receitas")
+    suspend fun getReceitas(@Query("projetoId") projetoId: String? = null): Response<List<TransacaoFinanceira>>
+
+    @POST("/api/inovacao/receitas")
+    suspend fun addReceita(@Body receita: TransacaoFinanceira): Response<TransacaoFinanceira>
+
+    @GET("/api/inovacao/despesas")
+    suspend fun getDespesas(@Query("projetoId") projetoId: String? = null): Response<List<TransacaoFinanceira>>
+
+    @POST("/api/inovacao/despesas")
+    suspend fun addDespesa(@Body despesa: TransacaoFinanceira): Response<TransacaoFinanceira>
+
+    @DELETE("/api/inovacao/transacoes/{id}")
+    suspend fun deleteTransacao(@Path("id") id: String): Response<Unit>
 }
 
