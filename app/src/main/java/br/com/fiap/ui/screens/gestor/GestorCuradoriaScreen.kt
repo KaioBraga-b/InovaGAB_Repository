@@ -60,10 +60,10 @@ fun GestorCuradoriaScreen(
     var selectedTab by remember { mutableStateOf(0) }
     
     val ideiasPendentes = todasIdeias
-        .filter { it.status != "Aprovada" && it.status != "Recusada" }
+        .filter { !it.status.equals("Aprovada", ignoreCase = true) && !it.status.equals("Recusada", ignoreCase = true) }
         .sortedByDescending { it.votos }
     val ideiasRecusadas = todasIdeias
-        .filter { it.status == "Recusada" }
+        .filter { it.status.equals("Recusada", ignoreCase = true) }
         .sortedByDescending { it.votos }
     
     val ideias = if (selectedTab == 0) ideiasPendentes else ideiasRecusadas
@@ -383,8 +383,15 @@ fun GestorIdeiaCardItem(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    val cardContext = androidx.compose.ui.platform.LocalContext.current
+
                     Button(
-                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id ?: "", "Aprovada") },
+                        onClick = {
+                            val id = ideia.id ?: ""
+                            inovacaoViewModel.atualizarStatusIdeia(id, "Aprovada") { sucesso, msg ->
+                                android.widget.Toast.makeText(cardContext, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF10B981)),
@@ -405,15 +412,21 @@ fun GestorIdeiaCardItem(
                     }
                     
                     OutlinedButton(
-                        onClick = { inovacaoViewModel.atualizarStatusIdeia(ideia.id ?: "", "Recusada") },
+                        onClick = {
+                            val id = ideia.id ?: ""
+                            inovacaoViewModel.atualizarStatusIdeia(id, "Recusada") { sucesso, msg ->
+                                android.widget.Toast.makeText(cardContext, msg, android.widget.Toast.LENGTH_SHORT).show()
+                            }
+                        },
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(8.dp),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFE5E7EB)),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFFCA5A5)),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFEF4444)),
                         contentPadding = PaddingValues(horizontal = 8.dp)
                     ) {
                         Text(
                             text = "✕ Recusar", 
-                            color = Color.Gray, 
+                            color = Color(0xFFEF4444), 
                             fontWeight = FontWeight.Bold,
                             fontSize = 13.sp,
                             maxLines = 1

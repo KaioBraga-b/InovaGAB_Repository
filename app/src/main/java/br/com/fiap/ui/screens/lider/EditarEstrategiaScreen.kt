@@ -30,7 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
 import br.com.fiap.model.Permissions
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditarEstrategiaScreen(
     navController: NavController, 
@@ -77,8 +77,10 @@ fun EditarEstrategiaScreen(
 
     Scaffold(
         bottomBar = { 
-            if (userRole == "GESTOR") GestorBottomBar(navController)
-            else LiderBottomBar(navController)
+            if (!WindowInsets.isImeVisible) {
+                if (userRole == "GESTOR") GestorBottomBar(navController)
+                else LiderBottomBar(navController)
+            }
         }
     ) { innerPadding ->
         Column(
@@ -86,11 +88,13 @@ fun EditarEstrategiaScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imeNestedScroll()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
             ) {
@@ -308,7 +312,17 @@ fun EditarEstrategiaScreen(
                         ) {
                             Slider(
                                 value = progresso.toFloat(),
-                                onValueChange = { if(isLider) progresso = it.toDouble() },
+                                onValueChange = { 
+                                    if(isLider) {
+                                        val p = it.toDouble().coerceIn(0.0, 1.0)
+                                        progresso = p
+                                        etapaSelecionada = when {
+                                            p < 0.30 -> 0
+                                            p < 0.80 -> 1
+                                            else -> 2
+                                        }
+                                    }
+                                },
                                 modifier = Modifier.weight(1f),
                                 enabled = isLider,
                                 colors = SliderDefaults.colors(
@@ -338,8 +352,12 @@ fun EditarEstrategiaScreen(
                                     onClick = { 
                                         if(isLider) {
                                             etapaSelecionada = index 
-                                            // Atualiza progresso mínimo baseado na etapa
-                                            if (progresso < index * 0.5) progresso = index * 0.5
+                                            progresso = when(index) {
+                                                0 -> 0.10
+                                                1 -> 0.50
+                                                2 -> 1.00
+                                                else -> 0.0
+                                            }
                                         }
                                     },
                                     modifier = Modifier.weight(1f).height(42.dp),
@@ -392,7 +410,7 @@ fun EditarEstrategiaScreen(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
     }

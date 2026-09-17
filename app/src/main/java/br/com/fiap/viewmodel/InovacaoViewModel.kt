@@ -84,7 +84,8 @@ data class Projeto(
     val resultadosAlcancados: String? = "",
     val dataInicio: String? = null,
     val prazo: String? = null,
-    var tarefas: List<ChecklistItem> = emptyList()
+    var tarefas: List<ChecklistItem> = emptyList(),
+    val groupId: String? = null
 )
 
 data class Estrategia(
@@ -99,7 +100,8 @@ data class Estrategia(
     val categoria: String? = "",
     val campanha: String? = "",
     val dataVigencia: String? = null,
-    val orientacoes: String? = null
+    val orientacoes: String? = null,
+    val groupId: String? = null
 )
 
 data class Ideia(
@@ -124,7 +126,8 @@ data class Ideia(
     val prioridadeBg: Int? = null,
     val estrategiaId: String? = "",
     val estrategiaTitulo: String? = "",
-    val comentarios: List<Comentario> = emptyList()
+    val comentarios: List<Comentario> = emptyList(),
+    val groupId: String? = null
 )
 
 class InovacaoViewModel : ViewModel() {
@@ -300,7 +303,7 @@ class InovacaoViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 val response = ApiClient.apiService.getDashboardResumo()
-                if (response.isSuccessful && response.body() != null && response.body()!!.investimentoTotal > 0.0) {
+                if (response.isSuccessful && response.body() != null) {
                     dashboardResumo = response.body()!!
                 } else {
                     recalcularDashboardResumo()
@@ -484,7 +487,8 @@ class InovacaoViewModel : ViewModel() {
         resultadoRoi: String? = null,
         investimento: String? = null,
         estrategiaId: String? = null,
-        estrategiaTitulo: String? = null
+        estrategiaTitulo: String? = null,
+        aumentoProdutividade: Double? = null
     ) {
         if (id.isBlank()) return
         val projeto = projetos.find { it.id == id } ?: return
@@ -520,7 +524,7 @@ class InovacaoViewModel : ViewModel() {
             estrategiaId = estrategiaId ?: projeto.estrategiaId,
             estrategiaTitulo = estrategiaTitulo ?: projeto.estrategiaTitulo,
             lucroObtido = projeto.lucroObtido,
-            aumentoProdutividade = projeto.aumentoProdutividade,
+            aumentoProdutividade = if (aumentoProdutividade != null) aumentoProdutividade else projeto.aumentoProdutividade,
             noPrazo = projeto.noPrazo
         )
 
@@ -860,19 +864,30 @@ class InovacaoViewModel : ViewModel() {
     }
 
     // Ideias
-    fun adicionarIdeia(ideia: Ideia) {
+    fun adicionarIdeia(ideia: Ideia, onComplete: ((Boolean) -> Unit)? = null) {
+        val payload = ideia.copy(
+            id = if (ideia.id.isNullOrBlank() || ideia.id.startsWith("local-")) null else ideia.id,
+            area = if (ideia.area.isNullOrBlank()) "Geral" else ideia.area
+        )
         val novaIdeia = if (ideia.id.isNullOrBlank()) ideia.copy(id = "local-${System.currentTimeMillis()}") else ideia
         ideias = (listOf(novaIdeia) + ideias).sortedByDescending { it.votos }
         adicionarNotificacaoLocal("Nova ideia submetida: \"${ideia.titulo}\"")
 
         viewModelScope.launch {
             try {
-                val response = ApiClient.apiService.addIdeia(ideia)
-                if (response.isSuccessful) {
+                val response = ApiClient.apiService.addIdeia(payload)
+                if (response.isSuccessful && response.body() != null) {
+                    val salva = response.body()!!
+                    ideias = ideias.map { if (it.id == novaIdeia.id) salva else it }.sortedByDescending { it.votos }
                     fetchIdeias()
+                    onComplete?.invoke(true)
+                } else {
+                    fetchIdeias()
+                    onComplete?.invoke(true)
                 }
             } catch (e: Exception) {
                 Log.e("API", "Erro ao adicionar ideia na API (mantida localmente)", e)
+                onComplete?.invoke(true)
             }
         }
     }
@@ -899,26 +914,67 @@ class InovacaoViewModel : ViewModel() {
         }
     }
 
-    fun atualizarStatusIdeia(id: String, novoStatus: String) {
+    fun vincularIdeiaAoGrupo(ideiaId: String, groupId: String, onComplete: ((Boolean, String) -> Unit)? = null) {
+        if (ideiaId.isBlank() || groupId.isBlank()) {
+            onComplete?.invoke(false, "ID da ideia ou do grupo inválido.")
+            return
+        }
+        val ideia = ideias.find { it.id == ideiaId }
+        if (ideia == null) {
+            onComplete?.invoke(false, "Ideia não encontrada.")
+            return
+        }
+
+        val atualizada = ideia.copy(
+            groupId = groupId,
+            etapa = "Enviada para o Grupo"
+        )
+
+        // Optimistic UI update
+        ideias = ideias.map { if (it.id == ideiaId) atualizada else it }
+        adicionarNotificacaoLocal("Ideia \"${ideia.titulo}\" vinculada ao grupo de inovação!")
+
+        viewModelScope.launch {
+            try {
+                val response = ApiClient.apiService.updateIdeia(ideiaId, atualizada)
+                if (response.isSuccessful) {
+                    fetchIdeias()
+                    onComplete?.invoke(true, "Ideia vinculada ao seu grupo com sucesso! 🚀")
+                } else {
+                    fetchIdeias()
+                    onComplete?.invoke(true, "Ideia vinculada ao grupo!")
+                }
+            } catch (e: Exception) {
+                Log.e("API", "Erro ao vincular ideia ao grupo", e)
+                onComplete?.invoke(true, "Ideia vinculada localmente ao grupo.")
+            }
+        }
+    }
+
+    fun atualizarStatusIdeia(id: String, novoStatus: String, onFeedback: ((Boolean, String) -> Unit)? = null) {
         if (id.isBlank()) return
-        val ideia = ideias.find { it.id == id } ?: return
+        val ideia = ideias.find { it.id == id }
+        if (ideia == null) {
+            onFeedback?.invoke(false, "Ideia não encontrada localmente")
+            return
+        }
         
-        val statusColor = when(novoStatus) {
-            "Aprovada" -> Color(0xFFDCFCE7).toArgb()
-            "Recusada" -> Color(0xFFFEE2E2).toArgb()
+        val statusColor = when {
+            novoStatus.equals("Aprovada", ignoreCase = true) -> Color(0xFFDCFCE7).toArgb()
+            novoStatus.equals("Recusada", ignoreCase = true) -> Color(0xFFFEE2E2).toArgb()
             else -> Color(0xFFFEF3C7).toArgb()
         }
-        val statusTextColor = when(novoStatus) {
-            "Aprovada" -> Color(0xFF16A34A).toArgb()
-            "Recusada" -> Color(0xFFEF4444).toArgb()
+        val statusTextColor = when {
+            novoStatus.equals("Aprovada", ignoreCase = true) -> Color(0xFF16A34A).toArgb()
+            novoStatus.equals("Recusada", ignoreCase = true) -> Color(0xFFEF4444).toArgb()
             else -> Color(0xFFD97706).toArgb()
         }
-        val etapa = when(novoStatus) {
-            "Aprovada" -> "Aprovada pelo gestor"
-            "Recusada" -> "Ideia arquivada"
+        val etapa = when {
+            novoStatus.equals("Aprovada", ignoreCase = true) -> "Aprovada pelo gestor"
+            novoStatus.equals("Recusada", ignoreCase = true) -> "Ideia arquivada"
             else -> "Em análise"
         }
-        val progresso = if (novoStatus == "Aprovada") 1.0 else 0.4
+        val progresso = if (novoStatus.equals("Aprovada", ignoreCase = true)) 1.0 else 0.4
 
         val atualizada = ideia.copy(
             status = novoStatus,
@@ -936,7 +992,9 @@ class InovacaoViewModel : ViewModel() {
             ideias = tempIdeias.sortedByDescending { it.votos }
         }
 
-        adicionarNotificacaoLocal("A ideia \"${ideia.titulo}\" foi ${if (novoStatus == "Aprovada") "Aprovada ✅" else "Recusada ❌"}")
+        val msg = "A ideia \"${ideia.titulo}\" foi ${if (novoStatus.equals("Aprovada", ignoreCase = true)) "Aprovada ✅" else "Recusada ❌"}"
+        adicionarNotificacaoLocal(msg)
+        onFeedback?.invoke(true, msg)
 
         viewModelScope.launch {
             try {

@@ -10,18 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ListAlt
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.AdsClick
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +29,7 @@ import br.com.fiap.ui.navigation.Screens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GestorTopBar(navController: NavController, initials: String) {
+fun LiderTopBar(navController: NavController, initials: String) {
     var showToggleMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
@@ -48,31 +37,31 @@ fun GestorTopBar(navController: NavController, initials: String) {
             Text(
                 text = buildAnnotatedString {
                     append("Inova")
-                    withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
+                    withStyle(style = SpanStyle(color = Color(0xFF6366F1))) {
                         append("GAB")
                     }
                 },
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E3A8A)
+                color = Color(0xFF312E81)
             )
         },
         actions = {
-            // Chip Perfil Gestor
+            // Chip Perfil Líder
             Surface(
-                color = Color(0xFFEFF6FF),
+                color = Color(0xFFEEF2FF),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Gestor",
+                    text = "Líder",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    color = Color(0xFF2563EB),
+                    color = Color(0xFF4338CA),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             // Avatar Perfil
             IconButton(
                 onClick = { navController.navigate(Screens.Profile.route) },
@@ -81,7 +70,7 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFEF4444), CircleShape),
+                        .background(Color(0xFF4338CA), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -95,12 +84,12 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 onClick = { showToggleMenu = true },
                 modifier = Modifier
                     .size(40.dp)
-                    .background(Color(0xFFEFF6FF), RoundedCornerShape(10.dp))
+                    .background(Color(0xFFEEF2FF), RoundedCornerShape(10.dp))
             ) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = "Menu de Navegação",
-                    tint = Color(0xFF2563EB)
+                    tint = Color(0xFF4338CA)
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
@@ -134,7 +123,7 @@ fun GestorTopBar(navController: NavController, initials: String) {
                         Box(
                             modifier = Modifier
                                 .size(44.dp)
-                                .background(Color(0xFF2563EB), CircleShape),
+                                .background(Color(0xFF4338CA), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
@@ -142,13 +131,13 @@ fun GestorTopBar(navController: NavController, initials: String) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Navegação do Gestor",
+                                text = "Navegação do Líder",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
-                                color = Color(0xFF1E3A8A)
+                                color = Color(0xFF312E81)
                             )
                             Text(
-                                text = "Grupo Águia Branca",
+                                text = "Gestão de Squad • Grupo Águia Branca",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
@@ -175,14 +164,14 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ToggleMenuItem(
-                    icon = Icons.Default.Home,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF2563EB),
-                    title = "Dashboard",
-                    subtitle = "Visão geral de métricas e ROI financeiro",
+                    icon = Icons.Default.BarChart,
+                    iconBg = Color(0xFFEEF2FF),
+                    iconColor = Color(0xFF4338CA),
+                    title = "Dashboard da Liderança",
+                    subtitle = "Métricas da equipe, progresso e indicadores",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.GestorHome.route) {
+                        navController.navigate(Screens.LiderHome.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -191,30 +180,14 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 )
 
                 ToggleMenuItem(
-                    icon = Icons.Default.Group,
-                    iconBg = Color(0xFFF5F3FF),
-                    iconColor = Color(0xFF7C3AED),
-                    title = "Gestão de Grupos & Membros",
-                    subtitle = "Crie grupos, delegue cargos e controle o GroupId",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestaoGrupos.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.PersonSearch,
+                    icon = Icons.Default.Folder,
                     iconBg = Color(0xFFEFF6FF),
                     iconColor = Color(0xFF2563EB),
-                    title = "Buscar & Adicionar Membro",
-                    subtitle = "Validar e-mail e vincular colaborador ao GroupId",
+                    title = "Projetos em Andamento",
+                    subtitle = "Acompanhamento das iniciativas do squad",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.AdicionarMembro.route) {
+                        navController.navigate(Screens.LiderProjetos.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -226,11 +199,11 @@ fun GestorTopBar(navController: NavController, initials: String) {
                     icon = Icons.Default.AdsClick,
                     iconBg = Color(0xFFECFDF5),
                     iconColor = Color(0xFF059669),
-                    title = "Estratégias",
-                    subtitle = "Objetivos e metas anuais do Grupo GAB",
+                    title = "Estratégias & Metas",
+                    subtitle = "Pilares estratégicos e objetivos da unidade",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate("${Screens.Estrategia.route}/GESTOR") {
+                        navController.navigate("${Screens.Estrategia.route}/LIDER") {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -239,14 +212,14 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 )
 
                 ToggleMenuItem(
-                    icon = Icons.Default.Folder,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF3B82F6),
-                    title = "Projetos em Andamento",
-                    subtitle = "Acompanhamento de etapas e cronogramas",
+                    icon = Icons.Default.AddCircle,
+                    iconBg = Color(0xFFF5F3FF),
+                    iconColor = Color(0xFF7C3AED),
+                    title = "Criar Nova Estratégia",
+                    subtitle = "Definir novo objetivo anual e pilares",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.GestorProjetos.route) {
+                        navController.navigate(Screens.CriarEstrategia.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -269,27 +242,11 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 Spacer(modifier = Modifier.height(8.dp))
 
                 ToggleMenuItem(
-                    icon = Icons.Default.CheckBox,
-                    iconBg = Color(0xFFDCFCE7),
-                    iconColor = Color(0xFF16A34A),
-                    title = "Curadoria de Ideias",
-                    subtitle = "Avaliação e aprovação de novas sugestões",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestorCuradoria.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
                     icon = Icons.Default.Lightbulb,
                     iconBg = Color(0xFFFEF3C7),
                     iconColor = Color(0xFFD97706),
                     title = "Ideias Aprovadas",
-                    subtitle = "Banco de ideias validadas prontas para virar projeto",
+                    subtitle = "Ideias validadas e prontas para virar projetos",
                     onClick = {
                         showToggleMenu = false
                         navController.navigate(Screens.GestorIdeiasAprovadas.route) {
@@ -301,11 +258,11 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 )
 
                 ToggleMenuItem(
-                    icon = Icons.Default.AddCircle,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF2563EB),
+                    icon = Icons.Default.Add,
+                    iconBg = Color(0xFFEEF2FF),
+                    iconColor = Color(0xFF4338CA),
                     title = "Lançar Nova Ideia",
-                    subtitle = "Cadastrar uma oportunidade de inovação",
+                    subtitle = "Cadastrar uma sugestão para avaliação",
                     onClick = {
                         showToggleMenu = false
                         navController.navigate(Screens.NovaIdeia.route) {
@@ -364,84 +321,22 @@ fun GestorTopBar(navController: NavController, initials: String) {
 
                 ToggleMenuItem(
                     icon = Icons.Default.Person,
-                    iconBg = Color(0xFFFEE2E2),
-                    iconColor = Color(0xFFDC2626),
+                    iconBg = Color(0xFFEEF2FF),
+                    iconColor = Color(0xFF4338CA),
                     title = "Meu Perfil",
-                    subtitle = "Informações do usuário e configurações",
+                    subtitle = "Dados cadastrais e credenciais de acesso",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.Profile.route)
+                        navController.navigate(Screens.Profile.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
-        }
-    }
-}
-
-@Composable
-fun ToggleMenuItem(
-    icon: ImageVector,
-    iconBg: Color,
-    iconColor: Color,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = Color.Transparent,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(iconBg, RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column {
-                    Text(
-                        text = title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
-                    )
-                    Text(
-                        text = subtitle,
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        maxLines = 1
-                    )
-                }
-            }
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = Color(0xFFCBD5E1),
-                modifier = Modifier.size(16.dp)
-            )
         }
     }
 }

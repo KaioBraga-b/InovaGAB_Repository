@@ -37,14 +37,15 @@ import br.com.fiap.viewmodel.Projeto
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.ui.screens.ProjetoCard
 import br.com.fiap.viewmodel.AuthViewModel
+import androidx.compose.ui.text.input.KeyboardType
 import br.com.fiap.api.Area
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CriarProjetoScreen(
     navController: NavController,
-    authViewModel: AuthViewModel = viewModel(),
-    inovacaoViewModel: InovacaoViewModel = viewModel()
+    inovacaoViewModel: InovacaoViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val userData = authViewModel.userData
     val userRole = (userData?.get("role") ?: userData?.get("Role"))?.toString() ?: "GESTOR"
@@ -57,6 +58,7 @@ fun CriarProjetoScreen(
     var novaAreaNome by remember { mutableStateOf("") }
     
     var investimento by remember { mutableStateOf("") }
+    var aumentoProdutividade by remember { mutableStateOf("") }
     var expandedEstrategia by remember { mutableStateOf(false) }
     var selectedEstrategia by remember { mutableStateOf<br.com.fiap.viewmodel.Estrategia?>(null) }
     var etapaSelecionada by remember { mutableIntStateOf(0) }
@@ -71,8 +73,10 @@ fun CriarProjetoScreen(
 
     Scaffold(
         bottomBar = { 
-            if (userRole == "GESTOR") GestorBottomBar(navController)
-            else LiderBottomBar(navController)
+            if (!WindowInsets.isImeVisible) {
+                if (userRole == "GESTOR") GestorBottomBar(navController)
+                else LiderBottomBar(navController)
+            }
         }
     ) { innerPadding ->
         Column(
@@ -80,11 +84,13 @@ fun CriarProjetoScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding() // Suporte dinâmico ao teclado
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imeNestedScroll()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
             ) {
@@ -425,6 +431,39 @@ fun CriarProjetoScreen(
                             }
                         }
 
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Text(
+                            text = "Ganho Estimado de Produtividade (%)",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = Color.Gray
+                        )
+                        OutlinedTextField(
+                            value = aumentoProdutividade,
+                            onValueChange = { newValue ->
+                                if (newValue.isEmpty() || newValue.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                                    aumentoProdutividade = newValue
+                                }
+                            },
+                            label = { Text("Aumento de Produtividade (%)") },
+                            placeholder = { Text("Ex: 15.5") },
+                            trailingIcon = { Text("%", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp)) },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedTextColor = Color(0xFF1E293B),
+                                unfocusedTextColor = Color(0xFF1E293B),
+                                focusedBorderColor = Color(0xFF2563EB),
+                                unfocusedBorderColor = Color(0xFFE5E7EB),
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                focusedLabelColor = Color(0xFF2563EB),
+                                unfocusedLabelColor = Color(0xFF64748B)
+                            )
+                        )
+
                         Spacer(modifier = Modifier.height(16.dp))
 
                         Text(
@@ -492,22 +531,23 @@ fun CriarProjetoScreen(
                                         area = areaSelecionada?.nome ?: area.ifBlank { "Geral" },
                                         periodo = "Iniciado agora",
                                         progresso = when(etapaSelecionada) {
-                                            0 -> 0.1
-                                            1 -> 0.3
-                                            2 -> 0.6
-                                            3 -> 1.0
+                                            0 -> 0.25
+                                            1 -> 0.50
+                                            2 -> 0.75
+                                            3 -> 1.00
                                             else -> 0.0
                                         },
                                         progressoTexto = when(etapaSelecionada) {
-                                            0 -> "10% concluído"
-                                            1 -> "30% concluído"
-                                            2 -> "60% concluído"
+                                            0 -> "25% concluído"
+                                            1 -> "50% concluído"
+                                            2 -> "75% concluído"
                                             3 -> "100% concluído"
                                             else -> "A iniciar"
                                         },
                                         etapaAtiva = etapaSelecionada,
                                         investimento = formattedInvestimento,
                                         valorMensal = if (valorNum > 0) valorNum / 12.0 else null,
+                                        aumentoProdutividade = aumentoProdutividade.replace(",", ".").toDoubleOrNull(),
                                         dataInicio = dataInicio,
                                         prazo = prazoFinal,
                                         estrategiaId = selectedEstrategia?.id,
@@ -546,7 +586,7 @@ fun CriarProjetoScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                 }
                 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
     }

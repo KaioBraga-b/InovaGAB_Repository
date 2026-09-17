@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import br.com.fiap.ui.components.LiderBottomBar
+import br.com.fiap.ui.components.LiderTopBar
 import br.com.fiap.ui.navigation.Screens
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
@@ -54,26 +55,7 @@ fun LiderHomeScreen(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Liderança", fontWeight = FontWeight.Bold) },
-                actions = {
-                    Surface(
-                        color = Color(0xFFE0E7FF),
-                        shape = RoundedCornerShape(20.dp),
-                        modifier = Modifier.padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = initials,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            color = Color(0xFF4338CA),
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
-            )
-        },
+        topBar = { LiderTopBar(navController, initials) },
         bottomBar = { LiderBottomBar(navController) },
         floatingActionButton = {
             FloatingActionButton(

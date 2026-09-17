@@ -57,7 +57,52 @@ data class AuthResponse(
     val nome: String?,
     val sobrenome: String?,
     val unidade: String?,
-    val email: String?
+    val email: String?,
+    val groupId: String? = null
+)
+
+data class GrupoRequest(
+    val nome: String,
+    val departamento: String,
+    val descricao: String? = null,
+    val membros: List<MembroRequest> = emptyList()
+)
+
+data class MembroRequest(
+    val email: String,
+    val role: String // OPERADOR, LIDER, GESTOR
+)
+
+data class MembroGrupo(
+    val usuarioId: String? = null,
+    val email: String? = null,
+    val nome: String? = null,
+    val role: String? = null,
+    val dataAdicao: String? = null
+)
+
+data class GrupoResponse(
+    val id: String? = null,
+    val hashId: String? = null,
+    val nome: String? = null,
+    val departamento: String? = null,
+    val descricao: String? = null,
+    val gestorId: String? = null,
+    val gestorEmail: String? = null,
+    val dataCriacao: String? = null,
+    val membros: List<MembroGrupo> = emptyList(),
+    val totalMembros: Int = 0
+)
+
+data class UserResponse(
+    val id: String? = null,
+    val nome: String? = null,
+    val sobrenome: String? = null,
+    val email: String? = null,
+    val role: String? = null,
+    val unidade: String? = null,
+    val ativo: Boolean = true,
+    val groupId: String? = null
 )
 
 interface InovaGabApi {
@@ -154,5 +199,27 @@ interface InovaGabApi {
 
     @DELETE("/api/inovacao/transacoes/{id}")
     suspend fun deleteTransacao(@Path("id") id: String): Response<Unit>
+
+    // Gestao de Grupos e Membros (Gestor)
+    @POST("/api/gestor/grupos")
+    suspend fun criarGrupo(@Body request: GrupoRequest): Response<GrupoResponse>
+
+    @GET("/api/gestor/grupos")
+    suspend fun listarGrupos(): Response<List<GrupoResponse>>
+
+    @GET("/api/gestor/grupos/{groupId}")
+    suspend fun obterGrupo(@Path("groupId") groupId: String): Response<GrupoResponse>
+
+    @PUT("/api/gestor/grupos/{groupId}")
+    suspend fun atualizarGrupo(@Path("groupId") groupId: String, @Body request: GrupoRequest): Response<GrupoResponse>
+
+    @POST("/api/gestor/grupos/{groupId}/membros")
+    suspend fun adicionarOuAtualizarMembro(@Path("groupId") groupId: String, @Body request: MembroRequest): Response<GrupoResponse>
+
+    @DELETE("/api/gestor/grupos/{groupId}/membros/{email}")
+    suspend fun removerMembro(@Path("groupId") groupId: String, @Path("email") email: String): Response<GrupoResponse>
+
+    @GET("/api/gestor/usuarios")
+    suspend fun listarUsuariosDisponiveis(@Query("busca") busca: String? = null): Response<List<UserResponse>>
 }
 

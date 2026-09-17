@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import br.com.fiap.ui.components.OperadorBottomBar
+import br.com.fiap.ui.components.OperadorTopBar
 import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
 
@@ -54,6 +55,7 @@ fun OperadorHomeScreen(
     val aprovadasCount = minhasIdeias.count { it.status?.contains("Aprovada") == true }
 
     Scaffold(
+        topBar = { OperadorTopBar(navController, initials) },
         bottomBar = { OperadorBottomBar(navController) }
     ) { innerPadding ->
         Column(
@@ -64,68 +66,13 @@ fun OperadorHomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(20.dp)
         ) {
-            // Header
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = buildAnnotatedString {
-                        append("Inova")
-                        withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
-                            append("GAB")
-                        }
-                    },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF1E3A8A)
-                )
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(
-                        onClick = { navController.navigate(Screens.Notificacoes.route) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box {
-                            Icon(
-                                imageVector = Icons.Default.Notifications,
-                                contentDescription = "Avisos e Notificações",
-                                tint = Color(0xFF1E3A8A)
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .size(8.dp)
-                                    .background(Color.Red, CircleShape)
-                                    .align(Alignment.TopEnd)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(12.dp))
-                    IconButton(
-                        onClick = { navController.navigate(Screens.Profile.route) },
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF2563EB), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "Bom dia, $userName 👋 • Operacional",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.Gray
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Impact Card
             Card(
@@ -175,9 +122,10 @@ fun OperadorHomeScreen(
                 )
             }
 
+            val userGroupId = authViewModel.userGroupId ?: (userData?.get("groupId") ?: userData?.get("GroupId"))?.toString()?.takeIf { it.isNotBlank() }
             Spacer(modifier = Modifier.height(24.dp))
             SectionTitle("ESTRATÉGIA DO GRUPO")
-            StrategyCard(navController, inovacaoViewModel)
+            StrategyCard(navController, inovacaoViewModel, userGroupId)
         }
     }
 }
@@ -221,38 +169,60 @@ fun QuickActionCard(
 }
 
 @Composable
-fun StrategyCard(navController: NavController, inovacaoViewModel: InovacaoViewModel) {
+fun StrategyCard(navController: NavController, inovacaoViewModel: InovacaoViewModel, userGroupId: String? = null) {
     val estrategia = inovacaoViewModel.estrategias.firstOrNull()
+    val semGrupo = userGroupId.isNullOrBlank()
     
     Card(
-        modifier = Modifier.fillMaxWidth().clickable { navController.navigate("${Screens.Estrategia.route}/OPERADOR") },
+        modifier = Modifier.fillMaxWidth().clickable { 
+            if (!semGrupo) {
+                navController.navigate("${Screens.Estrategia.route}/OPERADOR") 
+            }
+        },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = Color.White),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
                     .width(4.dp)
-                    .height(80.dp)
-                    .background(Color(0xFF2563EB), RoundedCornerShape(2.dp))
+                    .height(64.dp)
+                    .background(if (semGrupo) Color(0xFF94A3B8) else Color(0xFF2563EB), RoundedCornerShape(2.dp))
             )
             Spacer(modifier = Modifier.width(12.dp))
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text("🎯 Estratégia em Destaque", color = Color(0xFF2563EB), fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                    Text(
+                        text = if (semGrupo) "🔒 Estratégia do Grupo" else "🎯 Estratégia em Destaque",
+                        color = if (semGrupo) Color(0xFF64748B) else Color(0xFF2563EB),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 12.sp
+                    )
                     Spacer(modifier = Modifier.width(8.dp))
-                    Surface(color = Color(0xFFEFF6FF), shape = RoundedCornerShape(4.dp)) {
-                        Text("Ativa", color = Color(0xFF2563EB), modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    Surface(
+                        color = if (semGrupo) Color(0xFFF1F5F9) else Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = if (semGrupo) "Sem Grupo" else "Ativa",
+                            color = if (semGrupo) Color(0xFF64748B) else Color(0xFF2563EB),
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
+                        )
                     }
                 }
                 Spacer(modifier = Modifier.height(4.dp))
-                if (estrategia != null) {
+                if (semGrupo) {
+                    Text("Aguardando Vínculo a um Grupo", fontWeight = FontWeight.Bold, color = Color(0xFF1E293B), fontSize = 15.sp)
+                    Text("Você terá acesso às estratégias e metas assim que for adicionado a uma squad pelo Gestor.", color = Color.Gray, fontSize = 12.sp)
+                } else if (estrategia != null) {
                     Text(estrategia.titulo ?: "", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp, maxLines = 1)
                     Text(estrategia.descricao ?: "", color = Color.Gray, fontSize = 12.sp, maxLines = 2)
                 } else {
                     Text("Nenhuma estratégia cadastrada", fontWeight = FontWeight.Bold, color = Color.Black, fontSize = 16.sp)
-                    Text("Aguardando novas orientações do Gestor", color = Color.Gray, fontSize = 12.sp)
+                    Text("Aguardando novas orientações do Gestor para o grupo", color = Color.Gray, fontSize = 12.sp)
                 }
             }
         }

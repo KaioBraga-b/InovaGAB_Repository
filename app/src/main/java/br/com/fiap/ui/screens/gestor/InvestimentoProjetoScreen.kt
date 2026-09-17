@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 import java.text.NumberFormat
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun InvestimentoProjetoScreen(
     navController: NavController,
@@ -132,6 +132,8 @@ fun InvestimentoProjetoScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
+                .imePadding()
         ) {
             // Abas Superiores: Registrar vs Histórico
             TabRow(
@@ -168,6 +170,7 @@ fun InvestimentoProjetoScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
+                        .imeNestedScroll()
                         .verticalScroll(rememberScrollState())
                         .padding(20.dp)
                 ) {
@@ -604,6 +607,7 @@ fun InvestimentoProjetoScreen(
                                 fontSize = 15.sp
                             )
                         }
+                        Spacer(modifier = Modifier.height(48.dp))
                     }
                 }
             } else {

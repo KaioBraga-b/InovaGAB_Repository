@@ -9,6 +9,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -55,6 +56,7 @@ fun ProjetosScreen(
     val userData = authViewModel.userData
     val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val userGroupId = authViewModel.userGroupId ?: (userData?.get("groupId") ?: userData?.get("GroupId"))?.toString()?.takeIf { it.isNotBlank() }
     val initials = if (userName.isNotEmpty()) {
         userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
     } else {
@@ -69,6 +71,8 @@ fun ProjetosScreen(
         topBar = {
             if (userRole == "GESTOR") {
                 br.com.fiap.ui.components.GestorTopBar(navController, initials)
+            } else {
+                br.com.fiap.ui.components.LiderTopBar(navController, initials)
             }
         },
         bottomBar = {
@@ -156,7 +160,43 @@ fun ProjetosScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (projetos.isEmpty()) {
+            if (userGroupId.isNullOrBlank()) {
+                Surface(
+                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                    shadowElevation = 2.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .background(Color(0xFFEFF6FF), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Acesso Restrito ao Grupo",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E3A8A),
+                            fontSize = 17.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Você ainda não está associado a uma squad/grupo. Os projetos operacionais e financeiros são restritos e visualizados exclusivamente pelos membros do grupo.\n\nAssim que um Gestor vincular seu usuário a uma squad, você poderá visualizar e colaborar nos projetos da equipe.",
+                            color = Color(0xFF475569),
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else if (projetos.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -164,7 +204,7 @@ fun ProjetosScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Nenhum projeto cadastrado no momento.",
+                        text = "Nenhum projeto cadastrado para este grupo no momento.",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )
@@ -254,7 +294,7 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                         )
                     }
 
-                    if ((projeto.roi != null && projeto.roi > 0.0) || (projeto.lucroObtido != null && projeto.lucroObtido > 0.0)) {
+                    if ((projeto.roi != null && projeto.roi > 0.0) || (projeto.lucroObtido != null && projeto.lucroObtido > 0.0) || (projeto.aumentoProdutividade != null && projeto.aumentoProdutividade > 0.0)) {
                         Row(
                             modifier = Modifier.padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -281,6 +321,20 @@ fun ProjetoCard(projeto: Projeto, navController: NavController? = null, canEdit:
                                     Text(
                                         text = "Lucro: R$ ${String.format(java.util.Locale("pt", "BR"), "%,.2f", projeto.lucroObtido)}",
                                         color = Color(0xFF0369A1),
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 11.sp,
+                                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                    )
+                                }
+                            }
+                            if (projeto.aumentoProdutividade != null && projeto.aumentoProdutividade > 0.0) {
+                                Surface(
+                                    color = Color(0xFFFEF3C7),
+                                    shape = RoundedCornerShape(8.dp)
+                                ) {
+                                    Text(
+                                        text = "Prod: +${String.format(java.util.Locale("pt", "BR"), "%.1f", projeto.aumentoProdutividade)}%",
+                                        color = Color(0xFFB45309),
                                         fontWeight = FontWeight.Bold,
                                         fontSize = 11.sp,
                                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)

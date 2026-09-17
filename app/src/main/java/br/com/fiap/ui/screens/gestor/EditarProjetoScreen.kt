@@ -23,6 +23,8 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 import br.com.fiap.ui.components.GestorBottomBar
 import br.com.fiap.ui.components.LiderBottomBar
 import br.com.fiap.ui.theme.*
@@ -31,7 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
 import br.com.fiap.api.Area
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditarProjetoScreen(
     navController: NavController, 
@@ -51,6 +53,7 @@ fun EditarProjetoScreen(
     var showNewAreaDialog by remember { mutableStateOf(false) }
     var novaAreaNome by remember { mutableStateOf("") }
     var investimento by remember { mutableStateOf("") }
+    var aumentoProdutividade by remember { mutableStateOf("") }
     var expandedEstrategia by remember { mutableStateOf(false) }
     var selectedEstrategia by remember { mutableStateOf<br.com.fiap.viewmodel.Estrategia?>(null) }
     var progresso by remember { mutableDoubleStateOf(0.0) }
@@ -67,6 +70,7 @@ fun EditarProjetoScreen(
             area = projeto.area ?: ""
             areaSelecionada = inovacaoViewModel.areas.find { it.nome == projeto.area }
             investimento = projeto.investimento ?: ""
+            aumentoProdutividade = projeto.aumentoProdutividade?.let { if (it > 0) it.toString() else "" } ?: ""
             selectedEstrategia = inovacaoViewModel.estrategias.find { it.id == projeto.estrategiaId }
             progresso = projeto.progresso
             etapaSelecionada = projeto.etapaAtiva
@@ -102,8 +106,10 @@ fun EditarProjetoScreen(
             )
         },
         bottomBar = { 
-            if (userRole == "GESTOR") GestorBottomBar(navController)
-            else LiderBottomBar(navController)
+            if (!WindowInsets.isImeVisible) {
+                if (userRole == "GESTOR") GestorBottomBar(navController)
+                else LiderBottomBar(navController)
+            }
         }
     ) { innerPadding ->
         Column(
@@ -111,11 +117,13 @@ fun EditarProjetoScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imeNestedScroll()
                     .verticalScroll(rememberScrollState())
                     .padding(24.dp)
             ) {
@@ -344,7 +352,16 @@ fun EditarProjetoScreen(
 
                 Slider(
                     value = progresso.toFloat(),
-                    onValueChange = { progresso = it.toDouble() },
+                    onValueChange = { 
+                        val p = it.toDouble().coerceIn(0.0, 1.0)
+                        progresso = p
+                        etapaSelecionada = when {
+                            p <= 0.25 -> 0
+                            p <= 0.50 -> 1
+                            p <= 0.75 -> 2
+                            else -> 3
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = SliderDefaults.colors(
                         thumbColor = Color(0xFF2563EB),
@@ -370,9 +387,7 @@ fun EditarProjetoScreen(
                         Button(
                             onClick = { 
                                 etapaSelecionada = index 
-                                if (progresso < (index + 1) * 0.25) {
-                                    progresso = (index + 1) * 0.25
-                                }
+                                progresso = (index + 1) * 0.25
                             },
                             modifier = Modifier.weight(1f),
                             shape = RoundedCornerShape(8.dp),
@@ -395,7 +410,6 @@ fun EditarProjetoScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF1E3A8A)
                 )
-                
                 Spacer(modifier = Modifier.height(12.dp))
 
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -428,6 +442,30 @@ fun EditarProjetoScreen(
                     )
                 }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = aumentoProdutividade,
+                    onValueChange = { str ->
+                        if (str.isEmpty() || str.matches(Regex("""^\d*[.,]?\d*$"""))) {
+                            aumentoProdutividade = str
+                        }
+                    },
+                    label = { Text("Ganho de Produtividade (%)") },
+                    placeholder = { Text("Ex: 15.5") },
+                    trailingIcon = { Text("%", color = BluePrimary, fontWeight = FontWeight.Bold, modifier = Modifier.padding(end = 12.dp)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedTextColor = Color.Black,
+                        unfocusedTextColor = Color.Black,
+                        focusedBorderColor = BlueSecondary,
+                        unfocusedBorderColor = BorderGray
+                    )
+                )
+
                 Spacer(modifier = Modifier.height(40.dp))
 
                 Button(
@@ -443,7 +481,8 @@ fun EditarProjetoScreen(
                                 resultadoRoi = resultadoRoi.takeIf { it.isNotBlank() },
                                 investimento = investimento,
                                 estrategiaId = selectedEstrategia?.id,
-                                estrategiaTitulo = selectedEstrategia?.titulo
+                                estrategiaTitulo = selectedEstrategia?.titulo,
+                                aumentoProdutividade = aumentoProdutividade.replace(",", ".").toDoubleOrNull()
                             )
                             navController.popBackStack()
                         }
@@ -457,6 +496,7 @@ fun EditarProjetoScreen(
                 ) {
                     Text("Salvar Alterações", fontSize = 16.sp, fontWeight = FontWeight.Bold, color = Color.White)
                 }
+                Spacer(modifier = Modifier.height(48.dp))
             } // Column 124
         } // AnimatedVisibility 120
     } // Column 114

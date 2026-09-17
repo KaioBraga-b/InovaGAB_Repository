@@ -271,6 +271,16 @@ fun ProjetoCard(projeto: Projeto) {
                         fontWeight = FontWeight.Bold
                     )
                 }
+                projeto.aumentoProdutividade?.let {
+                    if (it > 0.0) {
+                        Text(
+                            text = "Prod: +${String.format(java.util.Locale("pt", "BR"), "%.1f", it)}%",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFD97706),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
                 projeto.estMensal?.let {
                     Text(
                         text = it,

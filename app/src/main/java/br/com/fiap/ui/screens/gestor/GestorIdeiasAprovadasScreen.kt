@@ -40,8 +40,12 @@ fun GestorIdeiasAprovadasScreen(
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
     val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "P")
 
+    LaunchedEffect(Unit) {
+        inovacaoViewModel.fetchIdeias()
+    }
+
     // Somente as aprovadas
-    val ideias = inovacaoViewModel.ideias.filter { it.status?.contains("Aprovada") == true }
+    val ideias = inovacaoViewModel.ideias.filter { it.status?.contains("Aprovada", ignoreCase = true) == true }
 
     Scaffold(
         topBar = { br.com.fiap.ui.components.GestorTopBar(navController, initials.uppercase()) },

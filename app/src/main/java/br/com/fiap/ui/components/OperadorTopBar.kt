@@ -10,18 +10,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.ListAlt
-import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.AdsClick
-import androidx.compose.material.icons.filled.CheckBox
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Folder
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Lightbulb
-import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +29,7 @@ import br.com.fiap.ui.navigation.Screens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GestorTopBar(navController: NavController, initials: String) {
+fun OperadorTopBar(navController: NavController, initials: String) {
     var showToggleMenu by remember { mutableStateOf(false) }
 
     TopAppBar(
@@ -48,7 +37,7 @@ fun GestorTopBar(navController: NavController, initials: String) {
             Text(
                 text = buildAnnotatedString {
                     append("Inova")
-                    withStyle(style = SpanStyle(color = Color(0xFF3B82F6))) {
+                    withStyle(style = SpanStyle(color = Color(0xFF0284C7))) {
                         append("GAB")
                     }
                 },
@@ -58,21 +47,21 @@ fun GestorTopBar(navController: NavController, initials: String) {
             )
         },
         actions = {
-            // Chip Perfil Gestor
+            // Chip Perfil Operador
             Surface(
-                color = Color(0xFFEFF6FF),
+                color = Color(0xFFF0FDF4),
                 shape = RoundedCornerShape(12.dp)
             ) {
                 Text(
-                    text = "Gestor",
+                    text = "Operador",
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                    color = Color(0xFF2563EB),
+                    color = Color(0xFF16A34A),
                     fontWeight = FontWeight.Bold,
                     fontSize = 12.sp
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            
+
             // Avatar Perfil
             IconButton(
                 onClick = { navController.navigate(Screens.Profile.route) },
@@ -81,7 +70,7 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0xFFEF4444), CircleShape),
+                        .background(Color(0xFF2563EB), CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 13.sp)
@@ -142,13 +131,13 @@ fun GestorTopBar(navController: NavController, initials: String) {
                         Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Navegação do Gestor",
+                                text = "Navegação do Operador",
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF1E3A8A)
                             )
                             Text(
-                                text = "Grupo Águia Branca",
+                                text = "Inovação Operacional • Grupo Águia Branca",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = Color.Gray
                             )
@@ -164,9 +153,9 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 HorizontalDivider(color = Color(0xFFF1F5F9))
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Seção 1: Gestão & Painéis
+                // Seção 1: Meu Espaço de Inovação
                 Text(
-                    text = "PAINEL & ESTRATÉGIA",
+                    text = "MEU ESPAÇO DE INOVAÇÃO",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF94A3B8),
@@ -178,105 +167,11 @@ fun GestorTopBar(navController: NavController, initials: String) {
                     icon = Icons.Default.Home,
                     iconBg = Color(0xFFEFF6FF),
                     iconColor = Color(0xFF2563EB),
-                    title = "Dashboard",
-                    subtitle = "Visão geral de métricas e ROI financeiro",
+                    title = "Página Inicial",
+                    subtitle = "Resumo das suas contribuições e impacto",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.GestorHome.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.Group,
-                    iconBg = Color(0xFFF5F3FF),
-                    iconColor = Color(0xFF7C3AED),
-                    title = "Gestão de Grupos & Membros",
-                    subtitle = "Crie grupos, delegue cargos e controle o GroupId",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestaoGrupos.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.PersonSearch,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF2563EB),
-                    title = "Buscar & Adicionar Membro",
-                    subtitle = "Validar e-mail e vincular colaborador ao GroupId",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.AdicionarMembro.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.AdsClick,
-                    iconBg = Color(0xFFECFDF5),
-                    iconColor = Color(0xFF059669),
-                    title = "Estratégias",
-                    subtitle = "Objetivos e metas anuais do Grupo GAB",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate("${Screens.Estrategia.route}/GESTOR") {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.Folder,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF3B82F6),
-                    title = "Projetos em Andamento",
-                    subtitle = "Acompanhamento de etapas e cronogramas",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestorProjetos.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = Color(0xFFF1F5F9))
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // Seção 2: Inovação & Ideias
-                Text(
-                    text = "INOVAÇÃO & IDEIAS",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF94A3B8),
-                    letterSpacing = 1.sp
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                ToggleMenuItem(
-                    icon = Icons.Default.CheckBox,
-                    iconBg = Color(0xFFDCFCE7),
-                    iconColor = Color(0xFF16A34A),
-                    title = "Curadoria de Ideias",
-                    subtitle = "Avaliação e aprovação de novas sugestões",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestorCuradoria.route) {
+                        navController.navigate(Screens.OperadorHome.route) {
                             popUpTo(navController.graph.findStartDestination().id) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -288,24 +183,8 @@ fun GestorTopBar(navController: NavController, initials: String) {
                     icon = Icons.Default.Lightbulb,
                     iconBg = Color(0xFFFEF3C7),
                     iconColor = Color(0xFFD97706),
-                    title = "Ideias Aprovadas",
-                    subtitle = "Banco de ideias validadas prontas para virar projeto",
-                    onClick = {
-                        showToggleMenu = false
-                        navController.navigate(Screens.GestorIdeiasAprovadas.route) {
-                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                            launchSingleTop = true
-                            restoreState = true
-                        }
-                    }
-                )
-
-                ToggleMenuItem(
-                    icon = Icons.Default.AddCircle,
-                    iconBg = Color(0xFFEFF6FF),
-                    iconColor = Color(0xFF2563EB),
                     title = "Lançar Nova Ideia",
-                    subtitle = "Cadastrar uma oportunidade de inovação",
+                    subtitle = "Compartilhe uma oportunidade ou melhoria",
                     onClick = {
                         showToggleMenu = false
                         navController.navigate(Screens.NovaIdeia.route) {
@@ -321,7 +200,7 @@ fun GestorTopBar(navController: NavController, initials: String) {
                     iconBg = Color(0xFFF1F5F9),
                     iconColor = Color(0xFF475569),
                     title = "Minhas Ideias",
-                    subtitle = "Histórico de contribuições pessoais",
+                    subtitle = "Histórico e status de aprovação das suas propostas",
                     onClick = {
                         showToggleMenu = false
                         navController.navigate(Screens.MinhasIdeias.route) {
@@ -336,9 +215,39 @@ fun GestorTopBar(navController: NavController, initials: String) {
                 HorizontalDivider(color = Color(0xFFF1F5F9))
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Seção 2: Estratégia
+                Text(
+                    text = "VISÃO & ESTRATÉGIA",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF94A3B8),
+                    letterSpacing = 1.sp
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+
+                ToggleMenuItem(
+                    icon = Icons.Default.AdsClick,
+                    iconBg = Color(0xFFECFDF5),
+                    iconColor = Color(0xFF059669),
+                    title = "Estratégias & Objetivos",
+                    subtitle = "Metas anuais do Grupo Águia Branca",
+                    onClick = {
+                        showToggleMenu = false
+                        navController.navigate("${Screens.Estrategia.route}/OPERADOR") {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = Color(0xFFF1F5F9))
+                Spacer(modifier = Modifier.height(16.dp))
+
                 // Seção 3: Comunicação & Conta
                 Text(
-                    text = "COMUNICAÇÃO & PERFIL",
+                    text = "COMUNICAÇÃO & CONTA",
                     fontSize = 11.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF94A3B8),
@@ -350,8 +259,8 @@ fun GestorTopBar(navController: NavController, initials: String) {
                     icon = Icons.Default.Notifications,
                     iconBg = Color(0xFFFFFBEB),
                     iconColor = Color(0xFFD97706),
-                    title = "Avisos & Notificações",
-                    subtitle = "Comunicados do sistema e atualizações",
+                    title = "Avisos & Comunicados",
+                    subtitle = "Comunicados do time e atualizações",
                     onClick = {
                         showToggleMenu = false
                         navController.navigate(Screens.Notificacoes.route) {
@@ -364,84 +273,22 @@ fun GestorTopBar(navController: NavController, initials: String) {
 
                 ToggleMenuItem(
                     icon = Icons.Default.Person,
-                    iconBg = Color(0xFFFEE2E2),
-                    iconColor = Color(0xFFDC2626),
+                    iconBg = Color(0xFFEFF6FF),
+                    iconColor = Color(0xFF2563EB),
                     title = "Meu Perfil",
-                    subtitle = "Informações do usuário e configurações",
+                    subtitle = "Informações cadastrais e credenciais",
                     onClick = {
                         showToggleMenu = false
-                        navController.navigate(Screens.Profile.route)
+                        navController.navigate(Screens.Profile.route) {
+                            popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     }
                 )
 
                 Spacer(modifier = Modifier.height(32.dp))
             }
-        }
-    }
-}
-
-@Composable
-fun ToggleMenuItem(
-    icon: ImageVector,
-    iconBg: Color,
-    iconColor: Color,
-    title: String,
-    subtitle: String,
-    onClick: () -> Unit
-) {
-    Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
-        color = Color.Transparent,
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 10.dp, horizontal = 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.weight(1f)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(40.dp)
-                        .background(iconBg, RoundedCornerShape(10.dp)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = iconColor,
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(14.dp))
-                Column {
-                    Text(
-                        text = title,
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF1E293B)
-                    )
-                    Text(
-                        text = subtitle,
-                        fontSize = 11.sp,
-                        color = Color(0xFF64748B),
-                        maxLines = 1
-                    )
-                }
-            }
-
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                contentDescription = null,
-                tint = Color(0xFFCBD5E1),
-                modifier = Modifier.size(16.dp)
-            )
         }
     }
 }

@@ -25,7 +25,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.InovacaoViewModel
 import br.com.fiap.viewmodel.AuthViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun EditarIdeiaScreen(
     navController: NavController,
@@ -81,18 +81,24 @@ fun EditarIdeiaScreen(
                 )
             )
         },
-        bottomBar = { DynamicBottomBar(navController, authViewModel) }
+        bottomBar = {
+            if (!WindowInsets.isImeVisible) {
+                DynamicBottomBar(navController, authViewModel)
+            }
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding() // Suporte ao teclado
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imeNestedScroll()
                     .verticalScroll(rememberScrollState())
                     .padding(24.dp)
             ) {
@@ -193,6 +199,7 @@ fun EditarIdeiaScreen(
                         fontSize = 16.sp
                     )
                 }
+                Spacer(modifier = Modifier.height(48.dp))
             }
         }
     }

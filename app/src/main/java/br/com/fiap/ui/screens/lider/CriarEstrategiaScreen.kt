@@ -39,7 +39,7 @@ import br.com.fiap.viewmodel.Estrategia
 import androidx.lifecycle.viewmodel.compose.viewModel
 import br.com.fiap.viewmodel.AuthViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CriarEstrategiaScreen(
     navController: NavController,
@@ -66,8 +66,10 @@ fun CriarEstrategiaScreen(
 
     Scaffold(
         bottomBar = { 
-            if (userRole == "GESTOR") GestorBottomBar(navController)
-            else LiderBottomBar(navController)
+            if (!WindowInsets.isImeVisible) {
+                if (userRole == "GESTOR") GestorBottomBar(navController)
+                else LiderBottomBar(navController)
+            }
         }
     ) { innerPadding ->
         Column(
@@ -75,11 +77,13 @@ fun CriarEstrategiaScreen(
                 .fillMaxSize()
                 .background(Color(0xFFF8F9FD))
                 .padding(innerPadding)
+                .consumeWindowInsets(innerPadding)
                 .imePadding()
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .imeNestedScroll()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 20.dp)
             ) {

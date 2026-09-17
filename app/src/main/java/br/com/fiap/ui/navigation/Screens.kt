@@ -21,4 +21,6 @@ sealed class Screens(val route: String) {
     object GestorCuradoria : Screens("gestor_curadoria")
     object InvestimentoProjeto : Screens("investimento_projeto")
     object Notificacoes : Screens("notificacoes")
+    object GestaoGrupos : Screens("gestao_grupos")
+    object AdicionarMembro : Screens("adicionar_membro")
 }

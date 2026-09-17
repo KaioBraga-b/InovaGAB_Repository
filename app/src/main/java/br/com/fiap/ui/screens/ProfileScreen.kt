@@ -58,7 +58,18 @@ fun ProfileScreen(navController: NavController, authViewModel: AuthViewModel = v
             TopAppBar(
                 title = { Text("Meu Perfil", fontWeight = FontWeight.Bold, color = BluePrimary) },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = { 
+                        if (!navController.popBackStack()) {
+                            val homeRoute = when (userRole) {
+                                "GESTOR" -> Screens.GestorHome.route
+                                "LIDER" -> Screens.LiderHome.route
+                                else -> Screens.OperadorHome.route
+                            }
+                            navController.navigate(homeRoute) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
+                    }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar", tint = BluePrimary)
                     }
                 },

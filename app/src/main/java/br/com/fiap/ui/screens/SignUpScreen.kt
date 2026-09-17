@@ -21,7 +21,7 @@ import androidx.navigation.NavController
 import br.com.fiap.ui.theme.*
 import br.com.fiap.viewmodel.AuthViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
@@ -54,6 +54,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 24.dp)
+                .imeNestedScroll()
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -248,7 +249,7 @@ fun SignUpScreen(navController: NavController, authViewModel: AuthViewModel = vi
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             }
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(64.dp))
         }
     }
 }

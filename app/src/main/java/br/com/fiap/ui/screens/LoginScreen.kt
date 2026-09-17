@@ -26,6 +26,7 @@ import br.com.fiap.ui.navigation.Screens
 import br.com.fiap.ui.theme.*
 import br.com.fiap.viewmodel.AuthViewModel
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = viewModel()) {
     var email by remember { mutableStateOf("") }
@@ -44,12 +45,13 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .imeNestedScroll()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             Text(
                 text = "InovaGAB",
@@ -177,7 +179,7 @@ fun LoginScreen(navController: NavController, authViewModel: AuthViewModel = vie
                     }
                 }
             }
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(64.dp))
         }
     }
 }

@@ -96,5 +96,21 @@ fun AppNavigation() {
         composable(Screens.Notificacoes.route) {
             br.com.fiap.ui.screens.NotificacoesScreen(navController, authViewModel, inovacaoViewModel)
         }
+        composable(Screens.GestaoGrupos.route) {
+            br.com.fiap.ui.screens.gestor.GestaoGruposScreen(navController, authViewModel)
+        }
+        composable(
+            route = "${Screens.AdicionarMembro.route}?groupId={groupId}",
+            arguments = listOf(androidx.navigation.navArgument("groupId") {
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getString("groupId")
+            br.com.fiap.ui.screens.gestor.AdicionarMembroScreen(navController, preSelectedGroupId = groupId, authViewModel = authViewModel)
+        }
+        composable(Screens.AdicionarMembro.route) {
+            br.com.fiap.ui.screens.gestor.AdicionarMembroScreen(navController, authViewModel = authViewModel)
+        }
     }
 }

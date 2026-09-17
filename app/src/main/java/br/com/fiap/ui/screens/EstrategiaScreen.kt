@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +52,7 @@ fun EstrategiaScreen(
     val userData = authViewModel.userData
     val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString() ?: ""
     val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val userGroupId = authViewModel.userGroupId ?: (userData?.get("groupId") ?: userData?.get("GroupId"))?.toString()?.takeIf { it.isNotBlank() }
     val initials = if (userName.isNotEmpty()) {
         userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
     } else {
@@ -187,7 +189,43 @@ fun EstrategiaScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            if (estrategias.isEmpty()) {
+            if (userGroupId.isNullOrBlank()) {
+                Surface(
+                    color = Color.White,
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 20.dp),
+                    shadowElevation = 2.dp
+                ) {
+                    Column(
+                        modifier = Modifier.padding(24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .background(Color(0xFFEFF6FF), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.Lock, contentDescription = null, tint = Color(0xFF2563EB), modifier = Modifier.size(28.dp))
+                        }
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "Acesso Restrito ao Grupo",
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1E3A8A),
+                            fontSize = 17.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Você ainda não está associado a uma squad/grupo. As estratégias e metas anuais do Grupo Águia Branca são direcionadas aos membros de cada grupo registrado.\n\nAssim que um Gestor adicionar seu perfil a um grupo, os direcionamentos estratégicos da sua equipe serão liberados aqui.",
+                            color = Color(0xFF475569),
+                            fontSize = 13.sp,
+                            lineHeight = 18.sp,
+                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                        )
+                    }
+                }
+            } else if (estrategias.isEmpty()) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -195,7 +233,7 @@ fun EstrategiaScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Nenhuma estratégia cadastrada no momento.",
+                        text = "Nenhuma estratégia cadastrada para este grupo no momento.",
                         color = Color.Gray,
                         fontSize = 14.sp
                     )

@@ -5,12 +5,14 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Group
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -41,6 +43,10 @@ fun MinhasIdeiasScreen(
     authViewModel: AuthViewModel = viewModel()
 ) {
     val userId = authViewModel.currentUserId ?: ""
+    val userData = authViewModel.userData
+    val userName = (userData?.get("nome") ?: userData?.get("Nome"))?.toString()?.takeIf { it.isNotBlank() } ?: "Operador"
+    val userSobrenome = (userData?.get("sobrenome") ?: userData?.get("Sobrenome"))?.toString() ?: ""
+    val initials = userName.take(1) + (if (userSobrenome.isNotEmpty()) userSobrenome.take(1) else "")
     var selectedTab by remember { mutableIntStateOf(0) }
     val context = androidx.compose.ui.platform.LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -51,12 +57,20 @@ fun MinhasIdeiasScreen(
         inovacaoViewModel.carregarVotosLocais(context, userId)
     }
 
+    val userGroupId = authViewModel.userGroupId ?: (userData?.get("groupId") ?: userData?.get("GroupId"))?.toString()?.takeIf { it.isNotBlank() }
+
     val todasIdeias = inovacaoViewModel.ideias
+    // Ideias abertas para votação no grupo: apenas ideias que foram enviadas para um grupo
     val ideiasParaVotacao = todasIdeias
-        .filter { it.status != "Aprovada" && it.status != "Recusada" }
+        .filter { 
+            !it.groupId.isNullOrBlank() && 
+            (userGroupId.isNullOrBlank() || it.groupId == userGroupId) &&
+            !it.status.equals("Aprovada", ignoreCase = true) && 
+            !it.status.equals("Recusada", ignoreCase = true) 
+        }
         .sortedByDescending { it.votos }
     val minhasIdeias = todasIdeias
-        .filter { it.userId == userId }
+        .filter { (userId.isNotBlank() && it.userId == userId) || (!it.autor.isNullOrBlank() && it.autor.equals(userName, ignoreCase = true)) }
         .sortedByDescending { it.votos }
     val ideias = if (selectedTab == 0) ideiasParaVotacao else minhasIdeias
 
@@ -94,17 +108,33 @@ fun MinhasIdeiasScreen(
                     color = Color(0xFF1E3A8A)
                 )
                 
-                Surface(
-                    color = Color(0xFFEFF6FF),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Text(
-                        text = "${ideias.size} ideias",
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        color = Color(0xFF2563EB),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Surface(
+                        color = Color(0xFFEFF6FF),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text(
+                            text = "${ideias.size} ideias",
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                            color = Color(0xFF2563EB),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 12.sp
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(8.dp))
+                    IconButton(
+                        onClick = { navController.navigate(Screens.Profile.route) },
+                        modifier = Modifier.size(36.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(Color(0xFF2563EB), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(initials, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                        }
+                    }
                 }
             }
 
@@ -198,12 +228,23 @@ fun MinhasIdeiasScreen(
                         val isFinalizada = status.contains("APROVAD") || status.contains("RECUSAD")
                         val limiteAtingido = votosGastos >= inovacaoViewModel.maxVotosPermitidos
                         val podeVotar = !isFinalizada && !limiteAtingido
+                        val canAddToGroup = !userGroupId.isNullOrBlank() && (ideia.userId == userId || (!ideia.autor.isNullOrBlank() && ideia.autor.equals(userName, ignoreCase = true))) && ideia.groupId.isNullOrBlank()
 
                         IdeiaCard(
                             ideia = ideia,
                             isFinalizada = isFinalizada,
                             limiteAtingido = limiteAtingido,
                             podeVotar = podeVotar,
+                            canAddToGroup = canAddToGroup,
+                            onAddToGroupClick = {
+                                if (!ideia.id.isNullOrBlank() && !userGroupId.isNullOrBlank()) {
+                                    inovacaoViewModel.vincularIdeiaAoGrupo(ideia.id, userGroupId) { success, msg ->
+                                        scope.launch {
+                                            snackbarHostState.showSnackbar(msg)
+                                        }
+                                    }
+                                }
+                            },
                             onEditClick = {
                                 if (ideia.userId == userId) {
                                     navController.navigate("${Screens.EditarIdeia.route}/${ideia.id}")
@@ -234,6 +275,8 @@ fun IdeiaCard(
     isFinalizada: Boolean,
     limiteAtingido: Boolean,
     podeVotar: Boolean,
+    canAddToGroup: Boolean = false,
+    onAddToGroupClick: () -> Unit = {},
     onEditClick: () -> Unit,
     onVoteClick: () -> Unit
 ) {
@@ -261,6 +304,20 @@ fun IdeiaCard(
                 }
                 
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    val isPessoal = ideia.groupId.isNullOrBlank()
+                    Surface(
+                        color = if (isPessoal) Color(0xFFF1F5F9) else Color(0xFFECFDF5),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = if (isPessoal) "🔒 Pessoal" else "👥 Grupo",
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                            color = if (isPessoal) Color(0xFF475569) else Color(0xFF059669),
+                            fontSize = 11.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(6.dp))
                     Surface(
                         color = Color(ideia.statusColor),
                         shape = RoundedCornerShape(8.dp)
@@ -433,6 +490,24 @@ fun IdeiaCard(
                         fontWeight = FontWeight.Bold,
                         color = if (podeVotar) Color.White else Color(0xFF64748B)
                     )
+                }
+            }
+
+            if (canAddToGroup) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Button(
+                    onClick = onAddToGroupClick,
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF059669),
+                        contentColor = Color.White
+                    ),
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)
+                ) {
+                    Icon(Icons.Default.Group, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Adicionar esta Ideia ao Grupo", fontWeight = FontWeight.Bold, fontSize = 13.sp)
                 }
             }
         }

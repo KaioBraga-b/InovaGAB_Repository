@@ -26,6 +26,9 @@ class AuthViewModel : ViewModel() {
     val currentUserId: String?
         get() = userData?.get("userId") as? String
 
+    val userGroupId: String?
+        get() = (userData?.get("groupId") as? String)?.takeIf { it.isNotBlank() }
+
     fun signIn(email: String, password: String, selectedProfile: UserProfile, onSuccess: () -> Unit) {
         if (email.isBlank() || password.isBlank()) {
             errorMessage = "E-mail e senha são obrigatórios"
@@ -50,7 +53,8 @@ class AuthViewModel : ViewModel() {
                             "nome" to (authData.nome ?: ""),
                             "sobrenome" to (authData.sobrenome ?: ""),
                             "unidade" to (authData.unidade ?: ""),
-                            "email" to (authData.email ?: "")
+                            "email" to (authData.email ?: ""),
+                            "groupId" to (authData.groupId ?: "")
                         )
                         onSuccess()
                     }
